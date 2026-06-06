@@ -468,11 +468,9 @@
         <th onclick="sortBy('onOrder',this)" class="num">On Order <span class="sa">↕</span></th>
         <th onclick="sortBy('primaryUnits',this)" class="num">Primary Units <span class="sa">↕</span></th>
         <th onclick="sortBy('reserveUnits',this)" class="num">Reserve Units <span class="sa">↕</span></th>
-        <th onclick="sortBy('soldWeek',this)" class="num">Sold 7d <span class="sa">↕</span></th>
-        <th onclick="sortBy('weekscover',this)" class="num">Wks Cover <span class="sa">↕</span></th>
         <th onclick="sortBy('binsTotal',this)">Bins <span class="sa">↕</span></th>
         <th onclick="sortBy('location',this)">Location <span class="sa">↕</span></th>
-        <th onclick="sortBy('posStart',this)">Position <span class="sa">↕</span></th>
+        <th onclick="sortBy('posStart',this)">Position Range <span class="sa">↕</span></th>
       </tr></thead>
       <tbody id="tableBody"></tbody>
     </table>
@@ -850,13 +848,17 @@ function renderTable() {
       lastCat=r.category;
       const cb=DATA.filter(x=>x.category===r.category&&x.location==='Primary').reduce((s,x)=>s+x.binsTotal,0);
       const cr=DATA.filter(x=>x.category===r.category&&x.location==='Reserve').length;
-      html+=`<tr class="cdiv"><td colspan="14">${r.category}<span>${cb} bins · ${(cb/6).toFixed(1)} cols${cr>0?' · '+cr+' in reserve':''}</span></td></tr>`;
+      html+=`<tr class="cdiv"><td colspan="12">${r.category}<span>${cb} bins · ${(cb/6).toFixed(1)} cols${cr>0?' · '+cr+' in reserve':''}</span></td></tr>`;
     }
-    let posCell = r.location==='Reserve'
-      ? '<span class="carton">📦 carton</span>'
-      : r.binsTotal>0&&r.posStart!=='—'
-        ? `<span class="pos-chip">${r.posStart}</span>`
-        : '<span style="color:var(--muted2)">—</span>';
+    let posCell;
+    if (r.location==='Reserve') {
+      posCell = '<span class="carton">📦 carton</span>';
+    } else if (r.binsTotal>0 && r.posStart!=='—') {
+      const endPos = getBinRange(r.posStart, r.binsTotal);
+      posCell = `<span class="pos-chip">${endPos}</span>`;
+    } else {
+      posCell = '<span style="color:var(--muted2)">—</span>';
+    }
     let binsCell = r.location==='Reserve'
       ? `<span style="font-size:10px;color:var(--amber);font-family:'DM Mono',monospace">${r.reserveUnits>0?r.reserveUnits.toLocaleString()+' units':'—'}</span>`
       : renderBins(r.binsTotal);
@@ -870,8 +872,6 @@ function renderTable() {
       <td class="num">${r.onOrder>0?`<span style="color:var(--amber);font-weight:500">${r.onOrder.toLocaleString()}</span>`:'<span style="color:var(--muted2)">—</span>'}</td>
       <td class="num" style="color:var(--green);font-weight:500">${r.primaryUnits>0?r.primaryUnits.toLocaleString():'—'}</td>
       <td class="num" style="color:var(--amber)">${r.reserveUnits>0?r.reserveUnits.toLocaleString():'—'}</td>
-      <td class="num">${r.soldWeek>0?`<span style="color:var(--green);font-weight:500">${r.soldWeek}</span>`:'<span style="color:var(--muted2)">—</span>'}</td>
-      <td class="num">${r.weekscover}</td>
       <td>${binsCell}</td>
       <td><span class="badge ${r.location==='Primary'?'b-primary':'b-reserve'}">${r.location}</span></td>
       <td>${posCell}</td>
