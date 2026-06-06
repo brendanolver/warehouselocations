@@ -435,6 +435,22 @@
       </div>
     </div>
 
+    <div class="mdd" id="dd-street">
+      <button class="mdd-btn" onclick="toggleDD('dd-street')"><span id="dd-street-lbl">Street</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-street-panel">
+        <label class="mdd-item"><input type="checkbox" value="A1" onchange="ddChange('dd-street')"> A1</label>
+        <label class="mdd-item"><input type="checkbox" value="A2" onchange="ddChange('dd-street')"> A2</label>
+        <label class="mdd-item"><input type="checkbox" value="B1" onchange="ddChange('dd-street')"> B1</label>
+        <label class="mdd-item"><input type="checkbox" value="B2" onchange="ddChange('dd-street')"> B2</label>
+        <label class="mdd-item"><input type="checkbox" value="C1" onchange="ddChange('dd-street')"> C1</label>
+        <label class="mdd-item"><input type="checkbox" value="C2" onchange="ddChange('dd-street')"> C2</label>
+        <label class="mdd-item"><input type="checkbox" value="D1" onchange="ddChange('dd-street')"> D1</label>
+        <label class="mdd-item"><input type="checkbox" value="D2" onchange="ddChange('dd-street')"> D2</label>
+        <label class="mdd-item"><input type="checkbox" value="E1" onchange="ddChange('dd-street')"> E1</label>
+        <label class="mdd-item"><input type="checkbox" value="E2" onchange="ddChange('dd-street')"> E2</label>
+      </div>
+    </div>
+
     <div class="fc" id="fCount">521 styles</div>
   </div>
   <div class="table-wrap">
@@ -760,7 +776,7 @@ function ddChange(id) {
     btn.classList.remove('active');
   } else {
     lblEl.textContent = vals.length === 1 ? vals[0].charAt(0)+vals[0].slice(1).toLowerCase() : {
-      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier'
+      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-street':'Street'
     }[id];
     btn.classList.add('active');
     const badge = document.createElement('span');
@@ -785,13 +801,15 @@ function getFiltered() {
   const cats = ddVals('dd-cat');
   const locs = ddVals('dd-loc');
   const sts  = ddVals('dd-status');
-  const tiers = ddVals('dd-tier');
+  const tiers   = ddVals('dd-tier');
+  const streets = ddVals('dd-street');
   return DATA.filter(r =>
     (!q || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
-    (!cats.length  || cats.includes(r.category)) &&
-    (!locs.length  || locs.includes(r.location)) &&
-    (!sts.length   || sts.includes(r.status)) &&
-    (!tiers.length || tiers.includes(r.tier))
+    (!cats.length    || cats.includes(r.category)) &&
+    (!locs.length    || locs.includes(r.location)) &&
+    (!sts.length     || sts.includes(r.status)) &&
+    (!tiers.length   || tiers.includes(r.tier)) &&
+    (!streets.length || streets.includes(r.posStart.substring(0, 2)))
   );
 }
 
