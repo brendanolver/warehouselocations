@@ -374,16 +374,18 @@ let COL_MAP = {"0":[{"product":"ADVOCATE HOOD SWEAT - BLACK","category":"SWEATS"
 let sortCol = 'category', sortDir = 1;
 
 // ── RECOMPUTE from raw data ──
-function calcBins(soh, onOrder, cat) {
+function calcBins(soh, onOrder, cat, status) {
   const total = soh + onOrder;
   if (total === 0) return 0;
-  if (ACCESSORIES.has(cat)) return 1;
+  // Core items with stock on order always reserve a full column (6 bins)
+  if (status === 'CORE' && onOrder > 0) return 6;
   if (BULKY.has(cat)) {
     if (total <= 30) return 1;
     if (total <= 72) return 2;
     if (total <= 144) return 3;
     return 6;
   }
+  // Accessories and standard items follow 60 units/bin logic
   if (total <= 60) return 1;
   if (total <= 180) return 2;
   if (total <= 360) return 3;
@@ -513,7 +515,7 @@ function parseCSV(text) {
     const status = obj['Status'] || '';
     const stockStatus = obj['Stock Status'] || '';
     const location = assignLocation(status, stockStatus, soh);
-    const bins = location === 'Reserve' ? 0 : calcBins(soh, onOrder, cat);
+    const bins = location === 'Reserve' ? 0 : calcBins(soh, onOrder, cat, status);
     const cap = primaryCap(bins, cat);
     rows.push({
       product: obj['Product'] || '',
@@ -792,13 +794,14 @@ function renderSuggestions() {
 
     // Consolidate: item using more bins than SOH needs
     if (r.binsTotal > 1) {
-      const binsNeeded = Math.max(1, Math.ceil(r.soh / upb));
+      const effectiveUnits = r.soh + r.onOrder;
+      const binsNeeded = Math.max(1, Math.ceil(effectiveUnits / upb));
       if (binsNeeded < r.binsTotal) {
         const newRange = getBinRange(r.posStart, binsNeeded);
         const freed = r.binsTotal - binsNeeded;
         consolidate.push({
           product: r.product, type: 'consolidate',
-          action: `Reduce from <strong>${r.binsTotal} bins → ${binsNeeded} bin${binsNeeded>1?'s':''}</strong> — frees ${freed} bin${freed>1?'s':''} (${r.soh} units fits in ${binsNeeded} × ${upb})`,
+          action: `Reduce from <strong>${r.binsTotal} bins → ${binsNeeded} bin${binsNeeded>1?'s':''}</strong> — frees ${freed} bin${freed>1?'s':''} (${effectiveUnits.toLocaleString()} units fits in ${binsNeeded} × ${upb})`,
           meta: `${r.soh} SOH · ${r.category} · Current: ${range}`,
           pos: newRange
         });
