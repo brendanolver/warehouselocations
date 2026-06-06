@@ -416,7 +416,9 @@
       <div class="mdd-panel" id="dd-loc-panel">
         <div class="mdd-clear" onclick="ddClear('dd-loc')">Select All</div>
         <label class="mdd-item"><input type="checkbox" value="Primary" onchange="ddChange('dd-loc')"> Primary</label>
-        <label class="mdd-item"><input type="checkbox" value="Reserve" onchange="ddChange('dd-loc')"> Reserve (Cartons)</label>
+        <label class="mdd-item"><input type="checkbox" value="RESERVE_INSTOCK" onchange="ddChange('dd-loc')"> Reserve (In-Stock)</label>
+        <label class="mdd-item"><input type="checkbox" value="RESERVE_PRERELEASE" onchange="ddChange('dd-loc')"> Reserve (Pre-Release)</label>
+        <label class="mdd-item"><input type="checkbox" value="RESERVE_ONORDER" onchange="ddChange('dd-loc')"> Reserve (On Order)</label>
       </div>
     </div>
 
@@ -840,7 +842,13 @@ function getFiltered() {
   return DATA.filter(r =>
     (!q || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
     (!cats.length    || cats.includes(r.category)) &&
-    (!locs.length    || locs.includes(r.location)) &&
+    (!locs.length    || locs.some(l => {
+      if (l === 'Primary')           return r.location === 'Primary';
+      if (l === 'RESERVE_INSTOCK')   return r.location === 'Reserve' && r.status !== 'PRE-RELEASE' && r.stockStatus !== 'On Order';
+      if (l === 'RESERVE_PRERELEASE')return r.location === 'Reserve' && r.status === 'PRE-RELEASE';
+      if (l === 'RESERVE_ONORDER')   return r.location === 'Reserve' && r.stockStatus === 'On Order';
+      return false;
+    })) &&
     (!sts.length     || sts.includes(r.status)) &&
     (!tiers.length   || tiers.includes(r.tier)) &&
     (!streets.length || streets.includes(r.posStart.substring(0, 2)))
