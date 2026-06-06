@@ -357,14 +357,14 @@ function calcBins(soh, onOrder, cat) {
     if (total <= 144) return 3;
     return 6;
   }
-  if (total <= 50) return 1;
-  if (total <= 150) return 2;
-  if (total <= 300) return 3;
+  if (total <= 60) return 1;
+  if (total <= 180) return 2;
+  if (total <= 360) return 3;
   return 6;
 }
 
 function primaryCap(bins, cat) {
-  return bins * (BULKY.has(cat) ? 12 : 50);
+  return bins * (BULKY.has(cat) ? 12 : 60);
 }
 
 function assignLocation(status, stockStatus, soh) {
