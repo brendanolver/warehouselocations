@@ -624,32 +624,61 @@ document.getElementById('csvInput').addEventListener('change', function(e) {
   reader.readAsText(file);
 });
 
+function splitCSVLine(line) {
+  // Properly handles quoted fields containing commas
+  const vals = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { vals.push(cur.trim()); cur = ''; }
+    else { cur += ch; }
+  }
+  vals.push(cur.trim());
+  return vals;
+}
+
 function parseCSV(text) {
   const lines = text.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  const headers = splitCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
+  // Case-insensitive header lookup
+  const hMap = {};
+  headers.forEach((h, i) => { hMap[h.toLowerCase()] = i; });
+  const col = name => {
+    const names = Array.isArray(name) ? name : [name];
+    for (const n of names) {
+      if (hMap[n.toLowerCase()] !== undefined) return hMap[n.toLowerCase()];
+    }
+    return -1;
+  };
+  const get = (vals, name, fallback='') => {
+    const i = col(name);
+    return i >= 0 && vals[i] !== undefined ? vals[i].replace(/^"|"$/g,'').trim() || fallback : fallback;
+  };
+
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
-    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g,''));
-    if (vals.length < headers.length) continue;
-    const obj = {};
-    headers.forEach((h, idx) => obj[h] = vals[idx] || '');
-    const soh = parseInt(obj['SOH']) || 0;
-    const onOrder = parseFloat(obj['On Order']) || 0;
-    const cat = obj['Category'] || '';
-    const status = obj['Status'] || '';
-    const stockStatus = obj['Stock Status'] || '';
+    if (!lines[i].trim()) continue;
+    const vals = splitCSVLine(lines[i]);
+    const soh = parseInt(get(vals,'SOH')) || 0;
+    const onOrder = parseFloat(get(vals,'On Order')) || 0;
+    const cat = get(vals,'Category');
+    const status = get(vals,'Status');
+    const stockStatus = get(vals,'Stock Status');
     const location = assignLocation(status, stockStatus, soh);
     const bins = location === 'Reserve' ? 0 : calcBins(soh, onOrder, cat, status);
     const cap = primaryCap(bins, cat);
+    // Accept several possible column names for month delivery
+    const monthDue = get(vals, ['Month Due','Month Del','Del Month','Delivery Month','Month']) || '—';
     rows.push({
-      product: obj['Product'] || '',
-      category: cat, status, tier: obj['Tier'] || '—',
+      product: get(vals,'Product'),
+      category: cat, status, tier: get(vals,'Tier','—'),
       stockStatus, soh, onOrder: Math.round(onOrder),
       primaryUnits: location === 'Reserve' ? 0 : Math.min(soh, cap),
       reserveUnits: location === 'Reserve' ? (onOrder > 0 ? Math.round(onOrder) : soh) : Math.max(0, soh - cap),
-      soldWeek: parseInt(obj['Sold (7d)']) || 0,
-      weekscover: obj['Weeks Cover'] || '—',
-      monthDue: obj['Month Due'] || '—',
+      soldWeek: parseInt(get(vals,'Sold (7d)')) || 0,
+      weekscover: get(vals,'Weeks Cover','—'),
+      monthDue,
       binsTotal: bins, location,
       posStart: '—', colNum: -1
     });
