@@ -1116,7 +1116,12 @@ function exportPDF() {
   tabIds.forEach(id => document.getElementById('tab-'+id).classList.remove('print-active'));
 }
 
-// Init
+// Init — recompute positions from embedded data so Core/A2 split applies on load
+(function(){
+  const result = recompute(DATA);
+  DATA = result.rows;
+  COL_MAP = result.colMap;
+})();
 updateStats();
 sortBy('category', document.querySelector('thead th:nth-child(2)'));
 </script>
