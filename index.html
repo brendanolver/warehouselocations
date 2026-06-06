@@ -671,8 +671,8 @@ function parseCSV(text) {
     const location = assignLocation(status, stockStatus, soh);
     const bins = location === 'Reserve' ? 0 : calcBins(soh, onOrder, cat, status);
     const cap = primaryCap(bins, cat);
-    // Accept several possible column names for month delivery
-    const monthDue = get(vals, ['Month Due','Month Del','Del Month','Delivery Month','Month']) || '—';
+    // Month Del (e.g. "Jul-26") takes priority over Month Due
+    const monthDue = get(vals, 'Month Del') || get(vals, 'Month Due') || get(vals, 'Delivery Month') || '—';
     rows.push({
       product: get(vals,'Product'),
       category: cat, status, tier: get(vals,'Tier','—'),
