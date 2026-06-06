@@ -234,7 +234,10 @@
       display: none !important;
       overflow: visible !important; max-height: none !important;
     }
-    .print-active { display: block !important; }
+    #tab-table.print-active, #tab-visual.print-active,
+    #tab-cats.print-active, #tab-suggest.print-active {
+      display: block !important;
+    }
 
     /* print header */
     .print-header {
