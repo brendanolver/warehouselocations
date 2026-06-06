@@ -563,13 +563,15 @@ function recompute(rawRows) {
     return a.product.localeCompare(b.product);
   }
 
-  // Three groups, each sorted by category order:
+  // Four groups, each sorted by category order:
   // 1. Outerwear (non-core) → A1 from col 0
   // 2. Core (all categories) → always starts at A2 (col 34)
-  // 3. Everything else non-core → fills after Core
-  const outerwearItems = primary.filter(r => r.category === 'OUTERWEAR' && r.status !== 'CORE').sort(catSort);
-  const coreItems      = primary.filter(r => r.status === 'CORE').sort(catSort);
-  const otherItems     = primary.filter(r => r.category !== 'OUTERWEAR' && r.status !== 'CORE').sort(catSort);
+  // 3. Everything else non-core, non-accessories → fills after Core
+  // 4. Accessories (non-core) → always starts at E1 (col 272)
+  const outerwearItems    = primary.filter(r => r.category === 'OUTERWEAR'   && r.status !== 'CORE').sort(catSort);
+  const coreItems         = primary.filter(r => r.status === 'CORE').sort(catSort);
+  const otherItems        = primary.filter(r => r.category !== 'OUTERWEAR' && r.category !== 'ACCESSORIES' && r.status !== 'CORE').sort(catSort);
+  const accessoriesItems  = primary.filter(r => r.category === 'ACCESSORIES' && r.status !== 'CORE').sort(catSort);
 
   const posMap = {};
   const colMap = {};
@@ -615,6 +617,10 @@ function recompute(rawRows) {
   // Everything else: continues after Core
   if (curPos > 0) { curCol++; curPos = 0; }
   packQueue(otherItems);
+
+  // E1 (col 272): Accessories — always starts fresh at E1
+  jumpToCol(STREETS.indexOf('E1') * COLS_PER_STREET);
+  packQueue(accessoriesItems);
 
   rawRows.forEach(r => {
     if (r.location === 'Primary' && posMap[r.product]) {
