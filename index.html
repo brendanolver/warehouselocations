@@ -199,6 +199,20 @@
   ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
   ::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
 
+  /* ── MULTI-SELECT DROPDOWNS ── */
+  .mdd{position:relative;flex-shrink:0}
+  .mdd-btn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:6px 10px;font-family:'DM Sans',sans-serif;font-size:12px;border-radius:7px;outline:none;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow-sm);transition:border-color .15s;user-select:none}
+  .mdd-btn:hover{border-color:var(--border2)}
+  .mdd-btn.active{border-color:var(--accent);color:var(--accent)}
+  .mdd-btn svg{opacity:.5;flex-shrink:0;transition:transform .15s}
+  .mdd.open .mdd-btn svg{transform:rotate(180deg)}
+  .mdd-panel{display:none;position:absolute;top:calc(100% + 5px);left:0;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;box-shadow:var(--shadow);z-index:200;min-width:170px;padding:6px 0;max-height:260px;overflow-y:auto}
+  .mdd.open .mdd-panel{display:block}
+  .mdd-item{display:flex;align-items:center;gap:9px;padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);cursor:pointer;transition:background .1s;white-space:nowrap}
+  .mdd-item:hover{background:var(--bg2)}
+  .mdd-item input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:pointer;flex-shrink:0}
+  .mdd-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;border-radius:99px;font-size:9px;font-weight:700;min-width:16px;height:16px;padding:0 4px;margin-left:2px}
+
   /* ── PDF EXPORT BUTTON ── */
   .pdf-btn{display:flex;align-items:center;gap:7px;padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.01em}
   .pdf-btn:hover{opacity:.88}
@@ -381,25 +395,46 @@
 <div id="tab-table">
   <div class="controls">
     <div class="sw"><span class="si">⌕</span><input type="text" id="search" placeholder="Search product or position…" oninput="renderTable()"></div>
-    <select id="fCat" onchange="renderTable()"><option value="">All Categories</option></select>
-    <select id="fLoc" onchange="renderTable()">
-      <option value="">All Locations</option>
-      <option value="Primary">Primary</option>
-      <option value="Reserve">Reserve (Cartons)</option>
-    </select>
-    <select id="fStatus" onchange="renderTable()">
-      <option value="">All Statuses</option>
-      <option value="CORE">Core</option><option value="CURRENT">Current</option>
-      <option value="NEW">New</option><option value="BUNDLE">Bundle</option>
-      <option value="OLD">Old</option><option value="REDUCED">Reduced</option>
-      <option value="PRE-RELEASE">Pre-Release</option><option value="ON ORDER">On Order</option>
-      <option value="CLEARANCE">Clearance</option>
-    </select>
-    <select id="fTier" onchange="renderTable()">
-      <option value="">All Tiers</option>
-      <option value="Platinum">💎 Platinum</option><option value="Rocket">🚀 Rocket</option>
-      <option value="Surfer">🏄 Surfer</option><option value="Dog">🐶 Dog</option><option value="Egg">🥚 Egg</option>
-    </select>
+
+    <div class="mdd" id="dd-cat">
+      <button class="mdd-btn" onclick="toggleDD('dd-cat')"><span id="dd-cat-lbl">Category</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-cat-panel"></div>
+    </div>
+
+    <div class="mdd" id="dd-loc">
+      <button class="mdd-btn" onclick="toggleDD('dd-loc')"><span id="dd-loc-lbl">Location</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-loc-panel">
+        <label class="mdd-item"><input type="checkbox" value="Primary" onchange="ddChange('dd-loc')"> Primary</label>
+        <label class="mdd-item"><input type="checkbox" value="Reserve" onchange="ddChange('dd-loc')"> Reserve (Cartons)</label>
+      </div>
+    </div>
+
+    <div class="mdd" id="dd-status">
+      <button class="mdd-btn" onclick="toggleDD('dd-status')"><span id="dd-status-lbl">Status</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-status-panel">
+        <label class="mdd-item"><input type="checkbox" value="CORE" onchange="ddChange('dd-status')"> Core</label>
+        <label class="mdd-item"><input type="checkbox" value="CURRENT" onchange="ddChange('dd-status')"> Current</label>
+        <label class="mdd-item"><input type="checkbox" value="NEW" onchange="ddChange('dd-status')"> New</label>
+        <label class="mdd-item"><input type="checkbox" value="BUNDLE" onchange="ddChange('dd-status')"> Bundle</label>
+        <label class="mdd-item"><input type="checkbox" value="OLD" onchange="ddChange('dd-status')"> Old</label>
+        <label class="mdd-item"><input type="checkbox" value="REDUCED" onchange="ddChange('dd-status')"> Reduced</label>
+        <label class="mdd-item"><input type="checkbox" value="PRE-RELEASE" onchange="ddChange('dd-status')"> Pre-Release</label>
+        <label class="mdd-item"><input type="checkbox" value="ON ORDER" onchange="ddChange('dd-status')"> On Order</label>
+        <label class="mdd-item"><input type="checkbox" value="CLEARANCE" onchange="ddChange('dd-status')"> Clearance</label>
+      </div>
+    </div>
+
+    <div class="mdd" id="dd-tier">
+      <button class="mdd-btn" onclick="toggleDD('dd-tier')"><span id="dd-tier-lbl">Tier</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-tier-panel">
+        <label class="mdd-item"><input type="checkbox" value="Platinum" onchange="ddChange('dd-tier')"> 💎 Platinum</label>
+        <label class="mdd-item"><input type="checkbox" value="Rocket" onchange="ddChange('dd-tier')"> 🚀 Rocket</label>
+        <label class="mdd-item"><input type="checkbox" value="Surfer" onchange="ddChange('dd-tier')"> 🏄 Surfer</label>
+        <label class="mdd-item"><input type="checkbox" value="Dog" onchange="ddChange('dd-tier')"> 🐶 Dog</label>
+        <label class="mdd-item"><input type="checkbox" value="Egg" onchange="ddChange('dd-tier')"> 🥚 Egg</label>
+      </div>
+    </div>
+
     <div class="fc" id="fCount">521 styles</div>
   </div>
   <div class="table-wrap">
@@ -660,19 +695,63 @@ function renderBins(n) {
 
 const numSort = v => { if(!v||v==='—') return 99999; const n=parseFloat(v); return isNaN(n)?99999:n; };
 
+// ── MULTI-SELECT DROPDOWN HELPERS ──
+function toggleDD(id) {
+  const dd = document.getElementById(id);
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.mdd.open').forEach(d => d.classList.remove('open'));
+  if (!isOpen) dd.classList.add('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.mdd')) document.querySelectorAll('.mdd.open').forEach(d => d.classList.remove('open'));
+});
+function ddVals(id) {
+  return [...document.querySelectorAll(`#${id}-panel input:checked`)].map(i => i.value);
+}
+function ddChange(id) {
+  const vals = ddVals(id);
+  const lblEl = document.getElementById(id+'-lbl');
+  const btn = document.querySelector(`#${id} .mdd-btn`);
+  const existing = btn.querySelector('.mdd-badge');
+  if (existing) existing.remove();
+  if (vals.length === 0) {
+    const defaults = {'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier'};
+    lblEl.textContent = defaults[id];
+    btn.classList.remove('active');
+  } else {
+    lblEl.textContent = vals.length === 1 ? vals[0].charAt(0)+vals[0].slice(1).toLowerCase() : {
+      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier'
+    }[id];
+    btn.classList.add('active');
+    const badge = document.createElement('span');
+    badge.className = 'mdd-badge';
+    badge.textContent = vals.length;
+    btn.insertBefore(badge, btn.querySelector('svg'));
+  }
+  renderTable();
+}
+
 const cats = [...new Set(DATA.map(r=>r.category))].sort();
-cats.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; document.getElementById('fCat').appendChild(o); });
+const catPanel = document.getElementById('dd-cat-panel');
+cats.forEach(c => {
+  const lbl = document.createElement('label');
+  lbl.className = 'mdd-item';
+  lbl.innerHTML = `<input type="checkbox" value="${c}" onchange="ddChange('dd-cat')"> ${c}`;
+  catPanel.appendChild(lbl);
+});
 
 function getFiltered() {
-  const q=document.getElementById('search').value.toLowerCase();
-  const cat=document.getElementById('fCat').value;
-  const loc=document.getElementById('fLoc').value;
-  const st=document.getElementById('fStatus').value;
-  const tier=document.getElementById('fTier').value;
-  return DATA.filter(r=>
-    (!q||r.product.toLowerCase().includes(q)||r.posStart.toLowerCase().includes(q))&&
-    (!cat||r.category===cat)&&(!loc||r.location===loc)&&
-    (!st||r.status===st)&&(!tier||r.tier===tier)
+  const q = document.getElementById('search').value.toLowerCase();
+  const cats = ddVals('dd-cat');
+  const locs = ddVals('dd-loc');
+  const sts  = ddVals('dd-status');
+  const tiers = ddVals('dd-tier');
+  return DATA.filter(r =>
+    (!q || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
+    (!cats.length  || cats.includes(r.category)) &&
+    (!locs.length  || locs.includes(r.location)) &&
+    (!sts.length   || sts.includes(r.status)) &&
+    (!tiers.length || tiers.includes(r.tier))
   );
 }
 
