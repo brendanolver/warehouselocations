@@ -382,18 +382,22 @@ function getPosLabel(binIdx) {
 }
 
 function recompute(rawRows) {
-  // Assign bins and positions
   const primary = rawRows.filter(r => r.location === 'Primary' && r.binsTotal > 0);
-  primary.sort((a,b) => {
+
+  function catSort(a, b) {
     let ai = CAT_ORDER.indexOf(a.category), bi = CAT_ORDER.indexOf(b.category);
     if (ai<0) ai=99; if (bi<0) bi=99;
     if (ai !== bi) return ai - bi;
     return a.product.localeCompare(b.product);
-  });
+  }
 
-  let curCol = 0, curPos = 0;
+  // Split into Current (non-core) and Core, each sorted by category order
+  const currentItems = primary.filter(r => r.status !== 'CORE').sort(catSort);
+  const coreItems    = primary.filter(r => r.status === 'CORE').sort(catSort);
+
   const posMap = {};
   const colMap = {};
+  let curCol = 0, curPos = 0;
 
   function placeItem(item) {
     const absIdx = curCol * 6 + curPos;
@@ -411,18 +415,26 @@ function recompute(rawRows) {
     if (curPos >= BINS_PER_COL) { curCol++; curPos = 0; }
   }
 
-  // First-fit with lookahead: when the next item is too large for the remaining
-  // gap, scan ahead for any item that fits rather than leaving bins empty.
-  const queue = [...primary];
-  while (queue.length > 0) {
-    const gap = BINS_PER_COL - curPos;
-    const idx = queue.findIndex(item => item.binsTotal <= gap);
-    if (idx === -1) {
-      curCol++; curPos = 0;
-    } else {
-      placeItem(queue.splice(idx, 1)[0]);
+  function packQueue(queue) {
+    while (queue.length > 0) {
+      const gap = BINS_PER_COL - curPos;
+      const idx = queue.findIndex(item => item.binsTotal <= gap);
+      if (idx === -1) { curCol++; curPos = 0; }
+      else placeItem(queue.splice(idx, 1)[0]);
     }
   }
+
+  // Current products fill from A1 (col 0)
+  packQueue(currentItems);
+
+  // Core products always start fresh at A2 (col 34)
+  const A2_START = COLS_PER_STREET; // 34
+  if (curCol < A2_START) {
+    curCol = A2_START; curPos = 0;
+  } else if (curPos > 0) {
+    curCol++; curPos = 0; // finish any partial column before jumping
+  }
+  packQueue(coreItems);
 
   rawRows.forEach(r => {
     if (r.location === 'Primary' && posMap[r.product]) {
