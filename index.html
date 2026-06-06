@@ -996,14 +996,13 @@ function renderCats(){
 
 // ── TABS ──
 function getBinRange(posStart, binsTotal) {
-  // Given first bin label e.g. "A2-05-03" and count, return "A2-05-03 – A2-05-05"
-  if (binsTotal <= 1 || !posStart || posStart === '—') return posStart;
+  if (!posStart || posStart === '—') return posStart;
   const m = posStart.match(/^([A-Z]\d-\d+-)(\d+)$/);
   if (!m) return posStart;
   const prefix = m[1], startBin = parseInt(m[2]);
-  const endBin = startBin + binsTotal - 1;
-  if (endBin <= 6) return `${posStart} – ${prefix}${String(endBin).padStart(2,'0')}`;
-  return posStart; // spans columns, just show start
+  const endBin = startBin + (binsTotal || 1) - 1;
+  const endLabel = `${prefix}${String(Math.min(endBin, 6)).padStart(2,'0')}`;
+  return `${posStart} – ${endLabel}`;
 }
 
 function renderSuggestions() {
