@@ -212,6 +212,8 @@
   .mdd-item:hover{background:var(--bg2)}
   .mdd-item input[type=checkbox]{accent-color:var(--accent);width:13px;height:13px;cursor:pointer;flex-shrink:0}
   .mdd-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--accent);color:#fff;border-radius:99px;font-size:9px;font-weight:700;min-width:16px;height:16px;padding:0 4px;margin-left:2px}
+  .mdd-clear{display:flex;align-items:center;padding:7px 14px;font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);cursor:pointer;border-bottom:1px solid var(--border);margin-bottom:4px;transition:color .1s;user-select:none}
+  .mdd-clear:hover{color:var(--accent)}
 
   /* ── PDF EXPORT BUTTON ── */
   .pdf-btn{display:flex;align-items:center;gap:7px;padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;letter-spacing:.01em}
@@ -407,6 +409,7 @@
     <div class="mdd" id="dd-loc">
       <button class="mdd-btn" onclick="toggleDD('dd-loc')"><span id="dd-loc-lbl">Location</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
       <div class="mdd-panel" id="dd-loc-panel">
+        <div class="mdd-clear" onclick="ddClear('dd-loc')">Select All</div>
         <label class="mdd-item"><input type="checkbox" value="Primary" onchange="ddChange('dd-loc')"> Primary</label>
         <label class="mdd-item"><input type="checkbox" value="Reserve" onchange="ddChange('dd-loc')"> Reserve (Cartons)</label>
       </div>
@@ -415,6 +418,7 @@
     <div class="mdd" id="dd-status">
       <button class="mdd-btn" onclick="toggleDD('dd-status')"><span id="dd-status-lbl">Status</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
       <div class="mdd-panel" id="dd-status-panel">
+        <div class="mdd-clear" onclick="ddClear('dd-status')">Select All</div>
         <label class="mdd-item"><input type="checkbox" value="CORE" onchange="ddChange('dd-status')"> Core</label>
         <label class="mdd-item"><input type="checkbox" value="CURRENT" onchange="ddChange('dd-status')"> Current</label>
         <label class="mdd-item"><input type="checkbox" value="NEW" onchange="ddChange('dd-status')"> New</label>
@@ -430,6 +434,7 @@
     <div class="mdd" id="dd-tier">
       <button class="mdd-btn" onclick="toggleDD('dd-tier')"><span id="dd-tier-lbl">Tier</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
       <div class="mdd-panel" id="dd-tier-panel">
+        <div class="mdd-clear" onclick="ddClear('dd-tier')">Select All</div>
         <label class="mdd-item"><input type="checkbox" value="Platinum" onchange="ddChange('dd-tier')"> 💎 Platinum</label>
         <label class="mdd-item"><input type="checkbox" value="Rocket" onchange="ddChange('dd-tier')"> 🚀 Rocket</label>
         <label class="mdd-item"><input type="checkbox" value="Surfer" onchange="ddChange('dd-tier')"> 🏄 Surfer</label>
@@ -441,6 +446,7 @@
     <div class="mdd" id="dd-street">
       <button class="mdd-btn" onclick="toggleDD('dd-street')"><span id="dd-street-lbl">Street</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
       <div class="mdd-panel" id="dd-street-panel">
+        <div class="mdd-clear" onclick="ddClear('dd-street')">Select All</div>
         <label class="mdd-item"><input type="checkbox" value="A1" onchange="ddChange('dd-street')"> A1</label>
         <label class="mdd-item"><input type="checkbox" value="A2" onchange="ddChange('dd-street')"> A2</label>
         <label class="mdd-item"><input type="checkbox" value="B1" onchange="ddChange('dd-street')"> B1</label>
@@ -771,6 +777,10 @@ document.addEventListener('click', e => {
 function ddVals(id) {
   return [...document.querySelectorAll(`#${id}-panel input:checked`)].map(i => i.value);
 }
+function ddClear(id) {
+  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = false);
+  ddChange(id);
+}
 function ddChange(id) {
   const vals = ddVals(id);
   const lblEl = document.getElementById(id+'-lbl');
@@ -796,6 +806,11 @@ function ddChange(id) {
 
 const cats = [...new Set(DATA.map(r=>r.category))].sort();
 const catPanel = document.getElementById('dd-cat-panel');
+const catClear = document.createElement('div');
+catClear.className = 'mdd-clear';
+catClear.textContent = 'Select All';
+catClear.onclick = () => ddClear('dd-cat');
+catPanel.appendChild(catClear);
 cats.forEach(c => {
   const lbl = document.createElement('label');
   lbl.className = 'mdd-item';
