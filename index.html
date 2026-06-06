@@ -363,7 +363,12 @@
   <div class="stat s7">
     <div class="stat-label">Allocated Units</div>
     <div class="stat-value sv-green" id="st-alloc-units">—</div>
-    <div class="stat-sub" id="st-alloc-units-sub">units on floor</div>
+    <div class="stat-sub" id="st-alloc-units-sub">units on floor (primary)</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:3px">
+      <div class="stat-sub" id="st-res-instock-sub" style="color:var(--text2)">— in-stock reserve</div>
+      <div class="stat-sub" id="st-res-prerelease-sub" style="color:var(--purple)">— pre-release</div>
+      <div class="stat-sub" id="st-res-onorder-sub" style="color:var(--amber)">— on order</div>
+    </div>
   </div>
 </div>
 
@@ -742,10 +747,17 @@ function updateStats() {
   document.getElementById('st-cols-sub').textContent = 'of 338 columns';
   const alloc = DATA.filter(r=>r.binsTotal>0).length;
   const allocUnits = DATA.filter(r=>r.location==='Primary').reduce((s,r)=>s+r.primaryUnits,0);
+  // Reserve breakdown
+  const resInstock    = DATA.filter(r=>r.status!=='PRE-RELEASE'&&r.stockStatus!=='On Order').reduce((s,r)=>s+r.reserveUnits,0);
+  const resPrerelease = DATA.filter(r=>r.status==='PRE-RELEASE').reduce((s,r)=>s+r.reserveUnits,0);
+  const resOnOrder    = DATA.filter(r=>r.stockStatus==='On Order').reduce((s,r)=>s+r.reserveUnits,0);
   document.getElementById('st-styles').textContent = DATA.length;
   document.getElementById('st-styles-sub').textContent = alloc+' allocated · '+rs+' reserve';
   document.getElementById('st-alloc-units').textContent = allocUnits.toLocaleString();
-  document.getElementById('st-alloc-units-sub').textContent = 'across '+alloc+' styles on floor';
+  document.getElementById('st-alloc-units-sub').textContent = 'units on floor (primary)';
+  document.getElementById('st-res-instock-sub').textContent = resInstock.toLocaleString()+' in-stock reserve';
+  document.getElementById('st-res-prerelease-sub').textContent = resPrerelease.toLocaleString()+' pre-release';
+  document.getElementById('st-res-onorder-sub').textContent = resOnOrder.toLocaleString()+' on order';
   document.getElementById('capFill').style.width = Math.min(pb/CAPACITY*100,100).toFixed(1)+'%';
   document.getElementById('capPct').textContent = (pb/CAPACITY*100).toFixed(1)+'%';
   document.getElementById('capNote').textContent = '📦 '+rs+' styles in cartons at reserve · 0 bins consumed';
