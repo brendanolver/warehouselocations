@@ -1269,44 +1269,36 @@ function setFPView(view, btn) {
 
 function renderLocTable() {
   const primary = DATA.filter(r => r.location === 'Primary' && r.binsTotal > 0);
-  // Group by street
+  const badgeMap = {'CORE':'b-core','NEW':'b-new','REDUCED':'b-reduced','OLD':'b-old','BUNDLE':'b-bundle','CURRENT':'b-current','PRE-RELEASE':'b-pre','ON ORDER':'b-order','CLEARANCE':'b-clear'};
+
+  // Group by street, sorted by posStart
   const byStreet = {};
-  STREETS.forEach(s => byStreet[s] = {});
   primary.forEach(r => {
     const s = r.posStart.substring(0,2);
-    const col = r.posStart.substring(0,7); // e.g. A1-01
-    if (!byStreet[s]) byStreet[s] = {};
-    if (!byStreet[s][col]) byStreet[s][col] = [];
-    byStreet[s][col].push(r);
+    if (!byStreet[s]) byStreet[s] = [];
+    byStreet[s].push(r);
   });
+  STREETS.forEach(s => { if (byStreet[s]) byStreet[s].sort((a,b) => a.posStart.localeCompare(b.posStart)); });
 
   let html = '<table><thead><tr>' +
-    '<th>Street</th><th>Column</th><th>Position Range</th><th>Product</th>' +
-    '<th>Category</th><th>Status</th><th>Bins</th><th>SOH</th><th>Primary Units</th>' +
+    '<th>Position</th><th>Product</th><th>Category</th><th>Status</th><th>Bins</th>' +
     '</tr></thead><tbody>';
 
   STREETS.forEach(street => {
-    const cols = byStreet[street];
-    if (!cols || !Object.keys(cols).length) return;
-    const colKeys = Object.keys(cols).sort();
-    colKeys.forEach((col, ci) => {
-      const items = cols[col].sort((a,b) => a.posStart.localeCompare(b.posStart));
-      items.forEach((r, ri) => {
-        const endBin = parseInt(r.posStart.slice(-2)) + r.binsTotal - 1;
-        const endPos = r.posStart.slice(0,-2) + String(Math.min(endBin,6)).padStart(2,'0');
-        const range = r.binsTotal > 1 ? r.posStart + ' – ' + endPos : r.posStart;
-        html += `<tr>
-          <td>${ci===0&&ri===0 ? `<strong>${street}</strong>` : ''}</td>
-          <td>${ri===0 ? `<span class="col-badge">${col}</span>` : ''}</td>
-          <td><span class="pos-range">${range}</span></td>
-          <td>${r.product}</td>
-          <td>${r.category}</td>
-          <td><span class="badge ${({'CORE':'b-core','NEW':'b-new','REDUCED':'b-reduced','OLD':'b-old','BUNDLE':'b-bundle','CURRENT':'b-current','PRE-RELEASE':'b-pre','ON ORDER':'b-order','CLEARANCE':'b-clear'})[r.status]||'b-old'}">${r.status}</span></td>
-          <td>${r.binsTotal}</td>
-          <td>${r.soh.toLocaleString()}</td>
-          <td>${r.primaryUnits.toLocaleString()}</td>
-        </tr>`;
-      });
+    const items = byStreet[street];
+    if (!items || !items.length) return;
+    html += `<tr class="street-group"><td colspan="5">Street ${street}</td></tr>`;
+    items.forEach(r => {
+      const endBin = parseInt(r.posStart.slice(-2)) + r.binsTotal - 1;
+      const endPos = r.posStart.slice(0,-2) + String(Math.min(endBin,6)).padStart(2,'0');
+      const range = r.binsTotal > 1 ? r.posStart + ' – ' + endPos : r.posStart;
+      html += `<tr>
+        <td><span class="pos-range">${range}</span></td>
+        <td>${r.product}</td>
+        <td>${r.category}</td>
+        <td><span class="badge ${badgeMap[r.status]||'b-old'}">${r.status}</span></td>
+        <td>${r.binsTotal}</td>
+      </tr>`;
     });
   });
   html += '</tbody></table>';
