@@ -544,9 +544,13 @@ function recompute(rawRows) {
     return a.product.localeCompare(b.product);
   }
 
-  // Split into Current (non-core) and Core, each sorted by category order
-  const currentItems = primary.filter(r => r.status !== 'CORE').sort(catSort);
-  const coreItems    = primary.filter(r => r.status === 'CORE').sort(catSort);
+  // Three groups, each sorted by category order:
+  // 1. Outerwear (non-core) → A1 from col 0
+  // 2. Core (all categories) → always starts at A2 (col 34)
+  // 3. Everything else non-core → fills after Core
+  const outerwearItems = primary.filter(r => r.category === 'OUTERWEAR' && r.status !== 'CORE').sort(catSort);
+  const coreItems      = primary.filter(r => r.status === 'CORE').sort(catSort);
+  const otherItems     = primary.filter(r => r.category !== 'OUTERWEAR' && r.status !== 'CORE').sort(catSort);
 
   const posMap = {};
   const colMap = {};
@@ -568,6 +572,11 @@ function recompute(rawRows) {
     if (curPos >= BINS_PER_COL) { curCol++; curPos = 0; }
   }
 
+  function jumpToCol(targetCol) {
+    if (curCol < targetCol) { curCol = targetCol; curPos = 0; }
+    else if (curPos > 0)    { curCol++; curPos = 0; }
+  }
+
   function packQueue(queue) {
     while (queue.length > 0) {
       const gap = BINS_PER_COL - curPos;
@@ -577,17 +586,16 @@ function recompute(rawRows) {
     }
   }
 
-  // Current products fill from A1 (col 0)
-  packQueue(currentItems);
+  // A1 (col 0–33): Outerwear
+  packQueue(outerwearItems);
 
-  // Core products always start fresh at A2 (col 34)
-  const A2_START = COLS_PER_STREET; // 34
-  if (curCol < A2_START) {
-    curCol = A2_START; curPos = 0;
-  } else if (curPos > 0) {
-    curCol++; curPos = 0; // finish any partial column before jumping
-  }
+  // A2 (col 34+): Core — always starts fresh at A2
+  jumpToCol(COLS_PER_STREET);
   packQueue(coreItems);
+
+  // Everything else: continues after Core
+  if (curPos > 0) { curCol++; curPos = 0; }
+  packQueue(otherItems);
 
   rawRows.forEach(r => {
     if (r.location === 'Primary' && posMap[r.product]) {
