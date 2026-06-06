@@ -164,6 +164,22 @@
 
   /* CATEGORY TAB */
   .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 240px);background:var(--bg)}
+  .sug-wrap{padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 200px);background:var(--bg);display:flex;flex-direction:column;gap:24px}
+  .sug-section-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .sug-section-title span{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:11px;font-weight:700;font-family:'DM Mono',monospace}
+  .sug-cards{display:flex;flex-direction:column;gap:8px}
+  .sug-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;transition:border-color .15s}
+  .sug-card:hover{border-color:var(--border2)}
+  .sug-card.urgent{border-left:3px solid #e05252}
+  .sug-card.consolidate{border-left:3px solid var(--amber)}
+  .sug-card.incoming{border-left:3px solid #4a9eff}
+  .sug-product{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--text);letter-spacing:.01em}
+  .sug-action{font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);line-height:1.5}
+  .sug-action strong{color:var(--text);font-weight:600}
+  .sug-pos{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);background:rgba(200,160,100,.08);border:1px solid rgba(200,160,100,.15);border-radius:5px;padding:2px 7px;display:inline-block}
+  .sug-meta{font-family:'DM Sans',sans-serif;font-size:11px;color:var(--muted);margin-top:2px}
+  .sug-empty{font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);text-align:center;padding:40px 0}
+  .sug-section{display:flex;flex-direction:column}
   .cat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;box-shadow:var(--shadow-sm);transition:box-shadow .15s,transform .15s}
   .cat-card:hover{box-shadow:var(--shadow);transform:translateY(-1px)}
   .cat-name{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -264,6 +280,7 @@
   <div class="tab-btn active" onclick="showTab('table',this)">Bin Allocation</div>
   <div class="tab-btn" onclick="showTab('visual',this)">Floor Plan</div>
   <div class="tab-btn" onclick="showTab('cats',this)">By Category</div>
+  <div class="tab-btn" onclick="showTab('suggest',this)">Suggestions</div>
 </nav>
 
 <!-- TABLE TAB -->
@@ -328,6 +345,11 @@
 <!-- CATEGORY TAB -->
 <div id="tab-cats" style="display:none">
   <div class="cat-grid" id="catGrid"></div>
+</div>
+
+<!-- SUGGESTIONS TAB -->
+<div id="tab-suggest" style="display:none">
+  <div class="sug-wrap" id="sugWrap"></div>
 </div>
 
 <!-- TOOLTIP -->
@@ -723,14 +745,130 @@ function renderCats(){
 }
 
 // ── TABS ──
+function getBinRange(posStart, binsTotal) {
+  // Given first bin label e.g. "A2-05-03" and count, return "A2-05-03 – A2-05-05"
+  if (binsTotal <= 1 || !posStart || posStart === '—') return posStart;
+  const m = posStart.match(/^([A-Z]\d-\d+-)(\d+)$/);
+  if (!m) return posStart;
+  const prefix = m[1], startBin = parseInt(m[2]);
+  const endBin = startBin + binsTotal - 1;
+  if (endBin <= 6) return `${posStart} – ${prefix}${String(endBin).padStart(2,'0')}`;
+  return posStart; // spans columns, just show start
+}
+
+function renderSuggestions() {
+  const el = document.getElementById('sugWrap');
+  if (!DATA || DATA.length === 0) {
+    el.innerHTML = '<div class="sug-empty">Load a CSV file to generate suggestions.</div>';
+    return;
+  }
+
+  const unitsPerBin = cat => BULKY.has(cat) ? 12 : 60;
+
+  const urgent = [], consolidate = [], incoming = [];
+
+  DATA.filter(r => r.location === 'Primary' && r.binsTotal > 0).forEach(r => {
+    const upb = unitsPerBin(r.category);
+    const wc = parseFloat(r.weekscover);
+    const range = getBinRange(r.posStart, r.binsTotal);
+
+    // Selling out: active seller with ≤3 weeks cover
+    if (r.soldWeek > 0 && !isNaN(wc) && wc <= 3) {
+      urgent.push({
+        product: r.product, type: 'urgent',
+        action: `Selling fast — only <strong>${wc} weeks cover</strong> remaining at ${r.soldWeek} units/week`,
+        meta: `${r.soh} SOH · ${r.category} · ${r.tier}`,
+        pos: range
+      });
+    }
+
+    // Consolidate: item using more bins than SOH needs
+    if (r.binsTotal > 1) {
+      const binsNeeded = Math.max(1, Math.ceil(r.soh / upb));
+      if (binsNeeded < r.binsTotal) {
+        const newRange = getBinRange(r.posStart, binsNeeded);
+        const freed = r.binsTotal - binsNeeded;
+        consolidate.push({
+          product: r.product, type: 'consolidate',
+          action: `Reduce from <strong>${r.binsTotal} bins → ${binsNeeded} bin${binsNeeded>1?'s':''}</strong> — frees ${freed} bin${freed>1?'s':''} (${r.soh} units fits in ${binsNeeded} × ${upb})`,
+          meta: `${r.soh} SOH · ${r.category} · Current: ${range}`,
+          pos: newRange
+        });
+      }
+    }
+  });
+
+  // Incoming drops: styles with a monthDue set, check if category needs space
+  const drops = DATA.filter(r => r.monthDue && r.monthDue !== '—');
+  const dropCats = [...new Set(drops.map(r => r.category))];
+  dropCats.forEach(cat => {
+    const catDrops = drops.filter(r => r.category === cat);
+    const totalOnOrder = catDrops.reduce((s, r) => s + r.onOrder, 0);
+    const months = [...new Set(catDrops.map(r => r.monthDue))].join(', ');
+    const upb = unitsPerBin(cat);
+    const binsNeeded = Math.ceil(totalOnOrder / upb);
+    // Find slow movers in same category that could be consolidated to make room
+    const slowMovers = DATA.filter(r =>
+      r.location === 'Primary' && r.category === cat &&
+      r.binsTotal > 1 && r.soldWeek === 0 &&
+      Math.ceil(r.soh / upb) < r.binsTotal
+    ).sort((a,b) => a.soldWeek - b.soldWeek).slice(0, 3);
+
+    if (binsNeeded > 0) {
+      let action = `<strong>${catDrops.length} style${catDrops.length>1?'s':''} arriving ${months}</strong> — ~${binsNeeded} bin${binsNeeded>1?'s':''} needed for ${totalOnOrder.toLocaleString()} incoming units`;
+      if (slowMovers.length > 0) {
+        action += `. Consider consolidating: <strong>${slowMovers.map(r=>r.product).join(', ')}</strong>`;
+      }
+      incoming.push({
+        product: cat, type: 'incoming',
+        action,
+        meta: `${catDrops.length} incoming style${catDrops.length>1?'s':''} · ${totalOnOrder.toLocaleString()} units on order`,
+        pos: null
+      });
+    }
+  });
+
+  // Sort urgent by weeks cover asc, consolidate by bins freed desc
+  urgent.sort((a,b) => parseFloat(a.meta) - parseFloat(b.meta));
+  consolidate.sort((a,b) => {
+    const fa = parseInt(a.action.match(/frees (\d+)/)?.[1]||0);
+    const fb = parseInt(b.action.match(/frees (\d+)/)?.[1]||0);
+    return fb - fa;
+  });
+
+  function renderSection(title, icon, items, type) {
+    if (!items.length) return '';
+    const cards = items.map(s => `
+      <div class="sug-card ${type}">
+        <div class="sug-product">${s.product}</div>
+        <div class="sug-action">${s.action}${s.pos ? ` — <span class="sug-pos">${s.pos}</span>` : ''}</div>
+        <div class="sug-meta">${s.meta}</div>
+      </div>`).join('');
+    return `<div class="sug-section">
+      <div class="sug-section-title"><span>${icon}</span>${title} <span style="color:var(--muted2);font-weight:400;font-size:10px">(${items.length})</span></div>
+      <div class="sug-cards">${cards}</div>
+    </div>`;
+  }
+
+  const html = [
+    renderSection('Selling Out', '🔴', urgent, 'urgent'),
+    renderSection('Consolidate Bins', '🟡', consolidate, 'consolidate'),
+    renderSection('Incoming Drops — Make Room', '🔵', incoming, 'incoming')
+  ].filter(Boolean).join('');
+
+  el.innerHTML = html || '<div class="sug-empty">No suggestions — allocations look good.</div>';
+}
+
 function showTab(tab,el){
   document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('tab-table').style.display=tab==='table'?'block':'none';
   document.getElementById('tab-visual').style.display=tab==='visual'?'block':'none';
   document.getElementById('tab-cats').style.display=tab==='cats'?'block':'none';
+  document.getElementById('tab-suggest').style.display=tab==='suggest'?'block':'none';
   if(tab==='visual') renderVisual();
   if(tab==='cats') renderCats();
+  if(tab==='suggest') renderSuggestions();
 }
 
 // Init
