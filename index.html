@@ -94,9 +94,8 @@
   .table-wrap{overflow-x:auto;height:calc(100vh - 330px);overflow-y:auto;background:var(--bg)}
   table{width:100%;border-collapse:separate;border-spacing:0}
   thead tr{background:var(--surface2);position:sticky;top:0;z-index:10}
-  tfoot tr{background:var(--surface2);position:sticky;bottom:0;z-index:10}
-  tfoot td{padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text2);border-top:2px solid var(--border2);white-space:nowrap}
-  tfoot td.tot-label{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  tr.totals-row td{background:var(--surface2);padding:8px 12px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text2);border-bottom:2px solid var(--border2);white-space:nowrap;position:sticky;top:38px;z-index:9}
+  tr.totals-row td.tot-label{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   thead th{padding:9px 12px;text-align:left;font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);border-bottom:1.5px solid var(--border2);white-space:nowrap;cursor:pointer;user-select:none;transition:color .12s}
   thead th:hover{color:var(--text2)}
   thead th.sorted{color:var(--accent)}
@@ -488,7 +487,6 @@
         <th onclick="sortBy('location',this)">Location <span class="sa">↕</span></th>
         <th onclick="sortBy('posStart',this)">Position Range <span class="sa">↕</span></th>
       </tr></thead>
-      <tfoot id="tableFoot"></tfoot>
       <tbody id="tableBody"></tbody>
     </table>
   </div>
@@ -887,7 +885,7 @@ function renderTable() {
   const tPU=rows.reduce((s,r)=>s+r.primaryUnits,0);
   const tRU=rows.reduce((s,r)=>s+r.reserveUnits,0);
   const tBins=rows.filter(r=>r.location==='Primary').reduce((s,r)=>s+r.binsTotal,0);
-  document.getElementById('tableFoot').innerHTML=`<tr>
+  const totalsRow = `<tr class="totals-row">
     <td class="tot-label">Totals</td><td></td><td></td><td></td><td></td>
     <td class="num" style="color:var(--text2)">${tSoh.toLocaleString()}</td>
     <td class="num" style="color:var(--amber)">${tOO>0?tOO.toLocaleString():'—'}</td>
@@ -925,7 +923,7 @@ function renderTable() {
       <td>${posCell}</td>
     </tr>`;
   });
-  tbody.innerHTML=html;
+  tbody.innerHTML=totalsRow+html;
 }
 
 // ── VISUAL FLOOR PLAN ──
