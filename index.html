@@ -395,29 +395,34 @@ function recompute(rawRows) {
   const posMap = {};
   const colMap = {};
 
-  primary.forEach(item => {
-    const bins = item.binsTotal;
-    if (bins === 6) {
-      if (curPos !== 0) { curCol++; curPos = 0; }
-    } else {
-      if (curPos + bins > BINS_PER_COL) { curCol++; curPos = 0; }
-    }
+  function placeItem(item) {
     const absIdx = curCol * 6 + curPos;
     const pos = getPosLabel(absIdx);
     posMap[item.product] = { posStart: pos, colNum: curCol };
-
     if (!colMap[String(curCol)]) colMap[String(curCol)] = [];
     colMap[String(curCol)].push({
-      product: item.product, category: item.category, bins,
+      product: item.product, category: item.category, bins: item.binsTotal,
       soh: item.soh, primaryUnits: item.primaryUnits,
       reserveUnits: item.reserveUnits, onOrder: item.onOrder,
       colour: CAT_COLOURS[item.category] || '#999',
       posStart: pos, status: item.status, tier: item.tier
     });
-
-    curPos += bins;
+    curPos += item.binsTotal;
     if (curPos >= BINS_PER_COL) { curCol++; curPos = 0; }
-  });
+  }
+
+  // First-fit with lookahead: when the next item is too large for the remaining
+  // gap, scan ahead for any item that fits rather than leaving bins empty.
+  const queue = [...primary];
+  while (queue.length > 0) {
+    const gap = BINS_PER_COL - curPos;
+    const idx = queue.findIndex(item => item.binsTotal <= gap);
+    if (idx === -1) {
+      curCol++; curPos = 0;
+    } else {
+      placeItem(queue.splice(idx, 1)[0]);
+    }
+  }
 
   rawRows.forEach(r => {
     if (r.location === 'Primary' && posMap[r.product]) {
