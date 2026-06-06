@@ -852,6 +852,7 @@ function renderVisual() {
   CAT_ORDER.forEach(cat=>{
     if(CAT_COLOURS[cat]) legHtml+=`<div class="vl-item"><div class="vl-dot" style="background:${CAT_COLOURS[cat]}"></div>${cat}</div>`;
   });
+  legHtml+='<div class="vl-item"><div class="vl-dot" style="background:#f5d800;outline:1.5px solid #1a1714;outline-offset:-1.5px"></div>CORE</div>';
   legHtml+='<div class="vl-item"><div class="vl-dot" style="background:var(--border)"></div>EMPTY</div>';
   document.getElementById('visLegend').innerHTML=legHtml;
 
@@ -880,7 +881,11 @@ function renderVisual() {
       binCells.forEach((cell,bi)=>{
         if(cell){
           const shortName = cell.item.product.length>25?cell.item.product.substring(0,25)+'…':cell.item.product;
-          cellsHtml+=`<div class="bin-cell" style="background:${cell.colour}" data-col="${c}" data-item="${encodeURIComponent(JSON.stringify({p:cell.item.product,c:cell.item.category,b:cell.item.bins,s:cell.item.soh,pu:cell.item.primaryUnits,ru:cell.item.reserveUnits,oo:cell.item.onOrder,pos:cell.item.posStart,st:cell.item.status,t:cell.item.tier}))}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
+          const isCore = cell.item.status === 'CORE';
+          const cellStyle = isCore
+            ? 'background:#f5d800;outline:1.5px solid #1a1714;outline-offset:-1.5px;z-index:1;position:relative'
+            : `background:${cell.colour}`;
+          cellsHtml+=`<div class="bin-cell" style="${cellStyle}" data-col="${c}" data-item="${encodeURIComponent(JSON.stringify({p:cell.item.product,c:cell.item.category,b:cell.item.bins,s:cell.item.soh,pu:cell.item.primaryUnits,ru:cell.item.reserveUnits,oo:cell.item.onOrder,pos:cell.item.posStart,st:cell.item.status,t:cell.item.tier}))}" onmouseenter="showTip(event,this)" onmouseleave="hideTip()"></div>`;
         } else {
           cellsHtml+=`<div class="bin-cell empty"></div>`;
         }
