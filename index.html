@@ -296,6 +296,7 @@
       <thead><tr>
         <th onclick="sortBy('product',this)">Product <span class="sa">↕</span></th>
         <th onclick="sortBy('category',this)">Category <span class="sa">↕</span></th>
+        <th onclick="sortBy('monthDue',this)">Month Del <span class="sa">↕</span></th>
         <th onclick="sortBy('status',this)">Status <span class="sa">↕</span></th>
         <th onclick="sortBy('tier',this)">Tier <span class="sa">↕</span></th>
         <th onclick="sortBy('soh',this)" class="num">SOH <span class="sa">↕</span></th>
@@ -565,7 +566,7 @@ function renderTable() {
       lastCat=r.category;
       const cb=DATA.filter(x=>x.category===r.category&&x.location==='Primary').reduce((s,x)=>s+x.binsTotal,0);
       const cr=DATA.filter(x=>x.category===r.category&&x.location==='Reserve').length;
-      html+=`<tr class="cdiv"><td colspan="13">${r.category}<span>${cb} bins · ${(cb/6).toFixed(1)} cols${cr>0?' · '+cr+' in reserve':''}</span></td></tr>`;
+      html+=`<tr class="cdiv"><td colspan="14">${r.category}<span>${cb} bins · ${(cb/6).toFixed(1)} cols${cr>0?' · '+cr+' in reserve':''}</span></td></tr>`;
     }
     let posCell = r.location==='Reserve'
       ? '<span class="carton">📦 carton</span>'
@@ -578,6 +579,7 @@ function renderTable() {
     html+=`<tr>
       <td class="pn">${r.product}</td>
       <td><span style="font-size:10px;color:var(--muted);font-family:'DM Sans',sans-serif">${r.category}</span></td>
+      <td><span style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace">${r.monthDue!=='—'?r.monthDue:'<span style="color:var(--muted2)">—</span>'}</span></td>
       <td><span class="badge ${badgeClass(r.status)}">${r.status}</span></td>
       <td style="text-align:center;font-size:13px">${tierIcon(r.tier)}</td>
       <td class="num" style="color:var(--text2);font-weight:500">${r.soh.toLocaleString()}</td>
