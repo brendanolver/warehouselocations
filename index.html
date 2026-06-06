@@ -913,9 +913,9 @@ function getFiltered() {
     (!cats.length    || cats.includes(r.category)) &&
     (!locs.length    || locs.some(l => {
       if (l === 'Primary')           return r.location === 'Primary';
-      if (l === 'RESERVE_INSTOCK')   return r.location === 'Reserve' && r.status !== 'PRE-RELEASE' && r.stockStatus !== 'On Order';
-      if (l === 'RESERVE_PRERELEASE')return r.location === 'Reserve' && r.status === 'PRE-RELEASE';
-      if (l === 'RESERVE_ONORDER')   return r.location === 'Reserve' && r.stockStatus === 'On Order';
+      if (l === 'RESERVE_INSTOCK')   return r.reserveUnits > 0 && r.status !== 'PRE-RELEASE' && r.stockStatus !== 'On Order';
+      if (l === 'RESERVE_PRERELEASE')return r.status === 'PRE-RELEASE';
+      if (l === 'RESERVE_ONORDER')   return r.stockStatus === 'On Order';
       return false;
     })) &&
     (!sts.length     || sts.includes(r.status)) &&
