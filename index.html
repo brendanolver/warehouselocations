@@ -570,6 +570,8 @@ let sortCol = 'category', sortDir = 1;
 function calcBins(soh, onOrder, cat, status) {
   const total = soh + onOrder;
   if (total === 0) return 0;
+  // Accessories = always 1 bin (no size variants)
+  if (cat === 'ACCESSORIES') return 1;
   // Core items with stock on order always reserve a full column (6 bins)
   if (status === 'CORE' && onOrder > 0) return 6;
   if (BULKY.has(cat)) {
