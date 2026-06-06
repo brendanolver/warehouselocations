@@ -639,15 +639,18 @@ function splitCSVLine(line) {
 }
 
 function parseCSV(text) {
+  // Strip BOM and normalise line endings
+  text = text.replace(/^﻿/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const lines = text.trim().split('\n');
+  const norm = s => s.replace(/^"|"$/g,'').trim().toLowerCase().replace(/\s+/g,' ');
   const headers = splitCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
-  // Case-insensitive header lookup
+  // Case-insensitive, whitespace-normalised header lookup
   const hMap = {};
-  headers.forEach((h, i) => { hMap[h.toLowerCase()] = i; });
+  headers.forEach((h, i) => { hMap[norm(h)] = i; });
   const col = name => {
     const names = Array.isArray(name) ? name : [name];
     for (const n of names) {
-      if (hMap[n.toLowerCase()] !== undefined) return hMap[n.toLowerCase()];
+      if (hMap[norm(n)] !== undefined) return hMap[norm(n)];
     }
     return -1;
   };
