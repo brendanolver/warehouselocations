@@ -555,6 +555,8 @@
       <button class="fp-toggle-btn" onclick="setFPView('table',this)">Location Table</button>
     </div>
 
+    <div class="sw" style="max-width:220px"><span class="si">⌕</span><input type="text" id="fp-search" placeholder="Search product or position…" oninput="fpDdChange()"></div>
+
     <div class="mdd" id="fp-dd-cat">
       <button class="mdd-btn" onclick="toggleDD('fp-dd-cat')"><span id="fp-dd-cat-lbl">Category</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
       <div class="mdd-panel" id="fp-dd-cat-panel"></div>
@@ -1347,12 +1349,14 @@ function fpDdChange() {
   if (isLocTable) renderLocTable(); else renderVisual();
 }
 function getFPFiltered() {
+  const q       = (document.getElementById('fp-search').value || '').toLowerCase();
   const cats    = fpDdVals('fp-dd-cat');
   const stats   = fpDdVals('fp-dd-status');
   const tiers   = fpDdVals('fp-dd-tier');
   const streets = fpDdVals('fp-dd-street');
   return DATA.filter(r =>
     r.location === 'Primary' && r.binsTotal > 0 &&
+    (!q           || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
     (!cats.length    || cats.includes(r.category)) &&
     (!stats.length   || stats.includes(r.status)) &&
     (!tiers.length   || tiers.includes(r.tier)) &&
