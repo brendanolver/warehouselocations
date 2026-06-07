@@ -1356,37 +1356,47 @@ function renderVisual() {
   legHtml+='<div class="vl-item"><div class="vl-dot" style="background:var(--border)"></div>EMPTY</div>';
   document.getElementById('visLegend').innerHTML=legHtml;
 
-  // Layout definition — streets with end bays between pairs
-  // G1 overhead label sits above B1, F1 above D1
+  // Column order matches physical warehouse left→right:
+  // A1 | A2 | AB1 | B1 | BC1 | B2 | C1 | CD1 | C2 | D1 | DE1 | D2 | E1 | E2
+  // G1 overhead above A2/AB1 gap, F1 above C2/D1 gap
   const LAYOUT = [
-    {type:'street',  id:'A1'},
-    {type:'endcap',  id:'AB1'},
-    {type:'street',  id:'A2'},
-    {type:'street',  id:'B1', topTag:'↑ G1'},
-    {type:'endcap',  id:'BC1'},
-    {type:'street',  id:'B2'},
-    {type:'street',  id:'C1'},
-    {type:'endcap',  id:'CD1'},
-    {type:'street',  id:'C2'},
-    {type:'street',  id:'D1', topTag:'↑ F1'},
-    {type:'endcap',  id:'DE1'},
-    {type:'street',  id:'D2'},
-    {type:'street',  id:'E1'},
-    {type:'street',  id:'E2'},
+    {type:'street', id:'A1'},
+    {type:'street', id:'A2'},
+    {type:'endcap', id:'AB1'},
+    {type:'street', id:'B1'},
+    {type:'endcap', id:'BC1'},
+    {type:'street', id:'B2'},
+    {type:'street', id:'C1'},
+    {type:'endcap', id:'CD1'},
+    {type:'street', id:'C2'},
+    {type:'street', id:'D1'},
+    {type:'endcap', id:'DE1'},
+    {type:'street', id:'D2'},
+    {type:'street', id:'E1'},
+    {type:'street', id:'E2'},
   ];
+  // Overhead shelf labels (positioned above specific columns)
+  const OVERHEAD = {AB1:'G1 · Beach Shorts', CD1:'F1 · Trackshorts'};
 
-  const CROSS_AT = 17; // columns above cross-aisle (0–16), below (17–33)
-  const ENDCAP_H = (CROSS_AT * 9 - 1) + 14 + (17 * 9 - 1); // match street height
+  const CROSS_AT = 17; // column positions above cross-aisle (0–16), below (17–33)
 
   let html = '<div class="wh-floor">';
 
   LAYOUT.forEach(col => {
     if (col.type === 'endcap') {
+      // End bay: same full-width bin column as a street, just currently empty
+      // Render all-empty bin rows with a dashed border to distinguish
+      const overheadTag = OVERHEAD[col.id]
+        ? `<div class="wh-top-tag">${OVERHEAD[col.id]}</div>`
+        : `<div style="height:18px"></div>`;
+      let topRows = '', bottomRows = '';
+      for (let rc = 0; rc < CROSS_AT; rc++) topRows += buildBinRow([]);
+      for (let rc = CROSS_AT; rc < COLS_PER_STREET; rc++) bottomRows += buildBinRow([]);
       html += `<div class="wh-col">
-        <div style="height:18px"></div>
-        <div style="width:32px;height:${ENDCAP_H}px;background:var(--bg2);border:1.5px dashed var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center">
-          <span style="font-size:8px;font-weight:700;color:var(--muted);writing-mode:vertical-rl;letter-spacing:.1em;font-family:'Syne',sans-serif;text-transform:uppercase">${col.id}</span>
-        </div>
+        ${overheadTag}
+        <div style="display:flex;flex-direction:column;gap:1px;border:1.5px dashed var(--border);border-radius:3px;padding:1px">${topRows}</div>
+        <div class="wh-aisle"><div class="wh-aisle-line"></div></div>
+        <div style="display:flex;flex-direction:column;gap:1px;border:1.5px dashed var(--border);border-radius:3px;padding:1px">${bottomRows}</div>
         <div class="wh-col-label endcap">${col.id}</div>
       </div>`;
     } else {
@@ -1401,12 +1411,8 @@ function renderVisual() {
         bottomRows += buildBinRow((COL_MAP[String(startCol + rc)]||[]).filter(i => fpFiltered.has(i.product)));
       }
 
-      const tagHtml = col.topTag
-        ? `<div class="wh-top-tag">${col.topTag}</div>`
-        : `<div style="height:18px"></div>`;
-
       html += `<div class="wh-col">
-        ${tagHtml}
+        <div style="height:18px"></div>
         <div style="display:flex;flex-direction:column;gap:1px">${topRows}</div>
         <div class="wh-aisle"><div class="wh-aisle-line"></div></div>
         <div style="display:flex;flex-direction:column;gap:1px">${bottomRows}</div>
