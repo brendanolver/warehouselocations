@@ -929,7 +929,7 @@ function ddVals(id) {
   return [...document.querySelectorAll(`#${id}-panel input:checked`)].map(i => i.value);
 }
 function ddClear(id) {
-  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = false);
+  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = true);
   ddChange(id);
 }
 function ddChange(id) {
@@ -960,7 +960,7 @@ const catPanel = document.getElementById('dd-cat-panel');
 const catClear = document.createElement('div');
 catClear.className = 'mdd-clear';
 catClear.textContent = 'Select All';
-catClear.onclick = () => ddClear('dd-cat');
+catClear.onclick = () => { document.querySelectorAll('#dd-cat-panel input').forEach(i => i.checked = true); ddChange('dd-cat'); };
 catPanel.appendChild(catClear);
 cats.forEach(c => {
   const lbl = document.createElement('label');
@@ -1327,12 +1327,7 @@ function fpDdVals(id) {
   return [...document.querySelectorAll(`#${id}-panel input:checked`)].map(i => i.value);
 }
 function fpDdClear(id) {
-  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = false);
-  const lbl = document.getElementById(id+'-lbl');
-  const btn = document.querySelector('#'+id+' .mdd-btn');
-  const names = {'fp-dd-cat':'Category','fp-dd-status':'Status','fp-dd-tier':'Tier','fp-dd-street':'Street'};
-  if (lbl) lbl.textContent = names[id] || id;
-  if (btn) btn.classList.remove('active');
+  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = true);
   fpDdChange();
 }
 function fpDdChange() {
