@@ -362,6 +362,10 @@
   <div class="header-title">Warehouse Bin Planner</div>
   <div class="header-right">
     <div class="header-meta" id="dataDate">06 June 2026 · 338 cols · 2,028 bins</div>
+    <button class="pdf-btn" onclick="exportLocationsCSV()" id="exportLocBtn" style="display:none">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 15 12 20 7 15"/><line x1="12" y1="3" x2="12" y2="20"/></svg>
+      Export Locations
+    </button>
     <button class="pdf-btn" onclick="exportPDF()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
       Export PDF
@@ -696,6 +700,7 @@ let COL_MAP = {"0":[{"product":"ADVOCATE HOOD SWEAT - BLACK","category":"SWEATS"
 let sortCol = 'category', sortDir = 1;
 let OVERRIDES = [];
 try { OVERRIDES = JSON.parse(localStorage.getItem('wms_overrides') || '[]'); } catch(e) { OVERRIDES = []; }
+let VARIANT_MAP = {}; // { productName: [{sku, variant}] } — populated when input CSV has SKU/Variant columns
 
 // ── RECOMPUTE from raw data ──
 function calcBins(soh, onOrder, cat, status) {
@@ -897,6 +902,7 @@ function loadCSV(file) {
     renderTable();
     if (document.getElementById('tab-visual').style.display !== 'none') renderVisual();
     if (document.getElementById('tab-cats').style.display !== 'none') renderCats();
+    document.getElementById('exportLocBtn').style.display = '';
     document.getElementById('uploadMsg').textContent = `${file.name} loaded · ${parsed.length} styles`;
     const banner = document.getElementById('uploadBanner');
     banner.classList.add('show');
@@ -964,6 +970,11 @@ function parseCSV(text) {
     return i >= 0 && vals[i] !== undefined ? vals[i].replace(/^"|"$/g,'').trim() || fallback : fallback;
   };
 
+  // Check for variant/SKU columns (for locations export)
+  const hasSKU     = col('SKU') >= 0;
+  const hasVariant = col('Variant') >= 0;
+  const newVariantMap = {};
+
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue;
@@ -978,8 +989,20 @@ function parseCSV(text) {
     const cap = primaryCap(bins, cat);
     // Month Del (e.g. "Jul-26") takes priority over Month Due
     const monthDue = get(vals, 'Month Del') || get(vals, 'Month Due') || get(vals, 'Delivery Month') || '—';
+    const productName = get(vals,'Product');
+
+    // Capture variant data if columns exist
+    if (hasSKU && hasVariant) {
+      const sku     = get(vals,'SKU');
+      const variant = get(vals,'Variant');
+      if (productName && sku) {
+        if (!newVariantMap[productName]) newVariantMap[productName] = [];
+        newVariantMap[productName].push({ sku, variant });
+      }
+    }
+
     rows.push({
-      product: get(vals,'Product'),
+      product: productName,
       category: cat, status, tier: get(vals,'Tier','—'),
       stockStatus, soh, onOrder: Math.round(onOrder),
       primaryUnits: location === 'Reserve' ? 0 : soh,
@@ -991,6 +1014,10 @@ function parseCSV(text) {
       posStart: '—', colNum: -1
     });
   }
+
+  // Update global variant map if we found variant data
+  if (Object.keys(newVariantMap).length > 0) VARIANT_MAP = newVariantMap;
+
   return rows.length ? rows : null;
 }
 
@@ -1740,6 +1767,77 @@ function locTableSort(col) {
 }
 
 // ── PDF EXPORT ──
+// ── LOCATIONS CSV EXPORT ──
+const SIZE_ORDER = ['OS','ONE SIZE','2XS','XXS','XS','S','M','L','XL','2XL','XXL','3XL','XXXL','4XL','XXXXL','5XL','XXXXXL'];
+function sizeRank(variant) {
+  // variant = "COLOUR / SIZE" or "SIZE" — extract the size part
+  const size = (variant.includes('/') ? variant.split('/').pop() : variant).trim().toUpperCase();
+  const idx = SIZE_ORDER.indexOf(size);
+  if (idx >= 0) return idx;
+  const n = parseFloat(size);
+  if (!isNaN(n)) return 1000 + n; // numeric sizes (waist) after letter sizes
+  return 999;
+}
+
+function assignVariantsToBins(variants, nBins) {
+  // Sort smallest → largest
+  const sorted = [...variants].sort((a, b) => sizeRank(a.variant) - sizeRank(b.variant));
+  const result = Array.from({length: nBins}, () => []); // result[binIndex] = [{sku,variant}]
+  const nV = sorted.length;
+  if (nV === 0) return result;
+  const extra = Math.max(0, nV - nBins);
+  // First (extra+1) variants → bin 0; remaining → bins 1..nBins-1
+  for (let i = 0; i < nV; i++) {
+    const binIdx = i <= extra ? 0 : i - extra;
+    if (binIdx < nBins) result[binIdx].push(sorted[i]);
+  }
+  return result;
+}
+
+function escCSV(s) {
+  s = String(s || '');
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g,'""') + '"';
+  return s;
+}
+
+function exportLocationsCSV() {
+  if (!DATA || DATA.length === 0) return;
+  const today = new Date().toISOString().slice(0,10);
+  const lines = ['SKU,Location,Product Name,Variant,Product Type'];
+
+  // Sort primary products by position
+  const products = DATA
+    .filter(r => r.location === 'Primary' && r.binsTotal > 0 && r.posStart !== '—')
+    .sort((a, b) => a.posStart.localeCompare(b.posStart));
+
+  products.forEach(r => {
+    const startIdx = posToAbsIdx(r.posStart);
+    if (startIdx < 0) return;
+    const variants = VARIANT_MAP[r.product] || [];
+    const binAssign = assignVariantsToBins(variants, r.binsTotal);
+
+    for (let b = 0; b < r.binsTotal; b++) {
+      const loc = getPosLabel(startIdx + b);
+      if (binAssign[b] && binAssign[b].length > 0) {
+        binAssign[b].forEach(v => {
+          lines.push([escCSV(v.sku), escCSV(loc), escCSV(r.product), escCSV(v.variant), escCSV(r.category)].join(','));
+        });
+      } else {
+        // No variant data — one row per bin with blank SKU/variant
+        lines.push(['', escCSV(loc), escCSV(r.product), '', escCSV(r.category)].join(','));
+      }
+    }
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `locations_${today}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
 function exportPDF() {
   // Identify active tab
   const tabIds = ['table','visual','cats','suggest'];
