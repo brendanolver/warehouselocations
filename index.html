@@ -929,7 +929,9 @@ function ddVals(id) {
   return [...document.querySelectorAll(`#${id}-panel input:checked`)].map(i => i.value);
 }
 function ddClear(id) {
-  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = true);
+  const inputs = [...document.querySelectorAll(`#${id}-panel input`)];
+  const allChecked = inputs.every(i => i.checked);
+  inputs.forEach(i => i.checked = !allChecked);
   ddChange(id);
 }
 function ddChange(id) {
@@ -1327,7 +1329,9 @@ function fpDdVals(id) {
   return [...document.querySelectorAll(`#${id}-panel input:checked`)].map(i => i.value);
 }
 function fpDdClear(id) {
-  document.querySelectorAll(`#${id}-panel input`).forEach(i => i.checked = true);
+  const inputs = [...document.querySelectorAll(`#${id}-panel input`)];
+  const allChecked = inputs.every(i => i.checked);
+  inputs.forEach(i => i.checked = !allChecked);
   fpDdChange();
 }
 function fpDdChange() {
