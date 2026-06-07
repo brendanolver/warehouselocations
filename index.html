@@ -626,43 +626,56 @@
 </div>
 
 <!-- OVERRIDES TAB -->
-<div id="tab-overrides" style="display:none;padding:24px 28px;max-width:860px">
+<div id="tab-overrides" style="display:none;padding:24px 28px;max-width:900px">
   <div style="margin-bottom:18px">
     <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text);margin-bottom:6px">Bin &amp; Position Overrides</div>
     <div style="font-size:12px;color:var(--muted);line-height:1.6">Override the calculated bin count or floor position for specific products. <strong>Bins is required</strong>; position is optional — leave blank to auto-allocate. Changes apply immediately to all views.</div>
   </div>
 
-  <!-- Existing overrides table -->
-  <div id="ovTable" style="margin-bottom:20px"></div>
+  <!-- Existing overrides table (editable inline) -->
+  <div id="ovTable" style="margin-bottom:24px"></div>
 
-  <!-- Add override form -->
+  <!-- Add override panel -->
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
     <div style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px">Add Override</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-      <div style="flex:1;min-width:220px">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Product</label>
-        <input id="ov-product" list="ov-product-list" placeholder="Start typing product name…"
-          style="width:100%;padding:7px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);box-sizing:border-box">
-        <datalist id="ov-product-list"></datalist>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+
+      <!-- Left: searchable product checklist -->
+      <div style="flex:1;min-width:260px">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <div class="sw" style="flex:1;max-width:none">
+            <span class="si">⌕</span>
+            <input type="text" id="ov-search" placeholder="Search products…" oninput="ovFilterList()"
+              style="width:100%;padding:6px 8px 6px 28px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+          <button onclick="ovToggleAll()" id="ov-sel-all-btn"
+            style="padding:5px 12px;font-size:11px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.04em;background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;white-space:nowrap">
+            Select All
+          </button>
+        </div>
+        <div id="ov-list" style="height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:var(--bg)"></div>
+        <div id="ov-sel-count" style="font-size:11px;color:var(--muted);margin-top:5px">0 selected</div>
       </div>
-      <div style="width:80px">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Bins <span style="color:#c0392b">*</span></label>
-        <input id="ov-bins" type="number" min="1" max="6" placeholder="1–6"
-          style="width:100%;padding:7px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);box-sizing:border-box">
-      </div>
-      <div style="width:130px">
-        <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Position <span style="color:var(--muted);font-size:10px">(optional)</span></label>
-        <input id="ov-pos" placeholder="e.g. A2-05-01"
-          style="width:100%;padding:7px 10px;font-size:12px;font-family:'DM Mono',monospace;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);box-sizing:border-box">
-      </div>
-      <div>
-        <button onclick="addOverride()"
-          style="padding:7px 18px;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.05em;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer">
-          + Add
+
+      <!-- Right: bins + position + add button -->
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:180px">
+        <div>
+          <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Bins <span style="color:#c0392b">*</span></label>
+          <input id="ov-bins" type="number" min="1" max="6" placeholder="1–6"
+            style="width:100%;padding:7px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);box-sizing:border-box">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:var(--muted);margin-bottom:4px">Position <span style="font-size:10px">(optional)</span></label>
+          <input id="ov-pos" placeholder="e.g. A2-05-01"
+            style="width:100%;padding:7px 10px;font-size:12px;font-family:'DM Mono',monospace;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);box-sizing:border-box">
+        </div>
+        <div id="ov-error" style="font-size:11px;color:#c0392b;display:none"></div>
+        <button onclick="addOverride()" id="ov-add-btn"
+          style="padding:8px 18px;font-size:12px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.05em;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;margin-top:4px">
+          + Add Selected
         </button>
       </div>
     </div>
-    <div id="ov-error" style="margin-top:8px;font-size:11px;color:#c0392b;display:none"></div>
   </div>
 </div>
 
@@ -1452,37 +1465,88 @@ function applyOverridesAndRefresh() {
   if (document.getElementById('tab-cats').style.display !== 'none') renderCats();
 }
 
-function renderOverridesTab() {
-  // Populate product datalist
-  const dl = document.getElementById('ov-product-list');
-  dl.innerHTML = '';
-  if (DATA && DATA.length) {
-    [...new Set(DATA.map(r => r.product))].sort().forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p;
-      dl.appendChild(opt);
-    });
-  }
-  // Render overrides table
-  const wrap = document.getElementById('ovTable');
-  if (OVERRIDES.length === 0) {
-    wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:12px 0">No overrides set. Add one below.</div>';
+// Track which products are checked across filter changes
+let ovSelected = new Set();
+
+// Build the searchable product checklist
+function ovFilterList() {
+  const q = (document.getElementById('ov-search').value || '').toLowerCase();
+  const all = DATA ? [...new Set(DATA.map(r => r.product))].sort() : [];
+  const filtered = q ? all.filter(p => p.toLowerCase().includes(q)) : all;
+  const wrap = document.getElementById('ov-list');
+  if (!filtered.length) {
+    wrap.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--muted)">No products match.</div>';
+    ovUpdateSelCount();
     return;
   }
+  wrap.innerHTML = filtered.map(p => {
+    const esc = p.replace(/"/g,'&quot;');
+    const checked = ovSelected.has(p) ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:6px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:12px;color:var(--text)" onmouseenter="this.style.background='var(--bg2)'" onmouseleave="this.style.background=''">
+      <input type="checkbox" value="${esc}" ${checked} onchange="ovToggleProduct(this)" style="width:14px;height:14px;accent-color:var(--accent);flex-shrink:0">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p}</span>
+    </label>`;
+  }).join('');
+  ovUpdateSelCount();
+}
+
+function ovToggleProduct(cb) {
+  if (cb.checked) ovSelected.add(cb.value); else ovSelected.delete(cb.value);
+  ovUpdateSelCount();
+}
+
+function ovUpdateSelCount() {
+  const n = ovSelected.size;
+  const el = document.getElementById('ov-sel-count');
+  if (el) el.textContent = n === 0 ? '0 selected' : `${n} product${n>1?'s':''} selected`;
+}
+
+function ovToggleAll() {
+  const inputs = [...document.querySelectorAll('#ov-list input')];
+  const allChecked = inputs.length > 0 && inputs.every(i => i.checked);
+  if (allChecked) {
+    inputs.forEach(i => { i.checked = false; ovSelected.delete(i.value); });
+  } else {
+    inputs.forEach(i => { i.checked = true; ovSelected.add(i.value); });
+  }
+  ovUpdateSelCount();
+}
+
+function renderOverridesTab() {
+  // Render product checklist
+  ovFilterList();
+
+  // Render overrides table (inline-editable)
+  const wrap = document.getElementById('ovTable');
+  if (OVERRIDES.length === 0) {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:4px 0 16px">No overrides set. Add products below.</div>';
+    return;
+  }
+  const thStyle = 'text-align:left;padding:8px 12px;font-family:\'Syne\',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border)';
+  const inStyle = 'padding:5px 8px;font-size:12px;border:1px solid var(--border);border-radius:5px;background:var(--bg);color:var(--text);width:100%;box-sizing:border-box';
   let html = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr>
-      <th style="text-align:left;padding:8px 12px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border)">Product</th>
-      <th style="text-align:center;padding:8px 12px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);width:70px">Bins</th>
-      <th style="text-align:left;padding:8px 12px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--border);width:130px">Position</th>
+      <th style="${thStyle}">Product</th>
+      <th style="${thStyle};width:80px;text-align:center">Bins</th>
+      <th style="${thStyle};width:150px">Position</th>
       <th style="border-bottom:2px solid var(--border);width:40px"></th>
     </tr></thead><tbody>`;
   OVERRIDES.forEach((ov, i) => {
     html += `<tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:8px 12px;color:var(--text)">${ov.product}</td>
-      <td style="padding:8px 12px;text-align:center;font-family:'DM Mono',monospace;color:var(--accent);font-weight:700">${ov.bins}</td>
-      <td style="padding:8px 12px;font-family:'DM Mono',monospace;color:var(--muted)">${ov.position || '<span style="color:var(--border)">auto</span>'}</td>
-      <td style="padding:8px 12px;text-align:center">
-        <button onclick="removeOverride(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer" title="Remove override">✕</button>
+      <td style="padding:7px 12px;color:var(--text)">${ov.product}</td>
+      <td style="padding:5px 8px;text-align:center">
+        <input type="number" min="1" max="6" value="${ov.bins}"
+          style="${inStyle};text-align:center;font-family:'DM Mono',monospace;color:var(--accent);font-weight:700"
+          onchange="updateOverride(${i},'bins',this.value)"
+          onblur="updateOverride(${i},'bins',this.value)">
+      </td>
+      <td style="padding:5px 8px">
+        <input type="text" value="${ov.position || ''}" placeholder="auto"
+          style="${inStyle};font-family:'DM Mono',monospace;color:var(--muted)"
+          onblur="updateOverride(${i},'position',this.value)">
+      </td>
+      <td style="padding:7px 8px;text-align:center">
+        <button onclick="removeOverride(${i})" style="background:none;border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer" title="Remove">✕</button>
       </td>
     </tr>`;
   });
@@ -1490,33 +1554,52 @@ function renderOverridesTab() {
   wrap.innerHTML = html;
 }
 
+function updateOverride(idx, field, value) {
+  if (!OVERRIDES[idx]) return;
+  if (field === 'bins') {
+    const v = parseInt(value);
+    if (!v || v < 1 || v > 6) return; // silently ignore invalid
+    OVERRIDES[idx].bins = v;
+  } else if (field === 'position') {
+    const v = value.trim();
+    if (v && posToAbsIdx(v) < 0) return; // silently ignore invalid position
+    OVERRIDES[idx].position = v;
+  }
+  saveOverrides();
+  applyOverridesAndRefresh();
+}
+
 function addOverride() {
-  const product = document.getElementById('ov-product').value.trim();
-  const bins    = parseInt(document.getElementById('ov-bins').value);
-  const pos     = document.getElementById('ov-pos').value.trim();
-  const errEl   = document.getElementById('ov-error');
+  const selected = [...ovSelected];
+  const bins     = parseInt(document.getElementById('ov-bins').value);
+  const pos      = document.getElementById('ov-pos').value.trim();
+  const errEl    = document.getElementById('ov-error');
 
   errEl.style.display = 'none';
 
-  if (!product) { errEl.textContent = 'Please enter a product name.'; errEl.style.display='block'; return; }
+  if (selected.length === 0) { errEl.textContent = 'Select at least one product from the list.'; errEl.style.display='block'; return; }
   if (!bins || bins < 1 || bins > 6) { errEl.textContent = 'Bins must be between 1 and 6.'; errEl.style.display='block'; return; }
   if (pos && posToAbsIdx(pos) < 0) { errEl.textContent = 'Position format must be like A2-05-01 (valid street, column 01–34, bin 1–6).'; errEl.style.display='block'; return; }
+  if (pos && selected.length > 1) { errEl.textContent = 'A fixed position can only be set for one product at a time.'; errEl.style.display='block'; return; }
 
-  // Check for existing override for this product
-  const existing = OVERRIDES.findIndex(o => o.product.toLowerCase() === product.toLowerCase());
-  if (existing >= 0) {
-    OVERRIDES[existing] = { product, bins, position: pos || '' };
-  } else {
-    OVERRIDES.push({ product, bins, position: pos || '' });
-  }
+  selected.forEach(product => {
+    const existing = OVERRIDES.findIndex(o => o.product === product);
+    if (existing >= 0) {
+      OVERRIDES[existing] = { product, bins, position: pos || '' };
+    } else {
+      OVERRIDES.push({ product, bins, position: pos || '' });
+    }
+  });
 
   saveOverrides();
   applyOverridesAndRefresh();
 
-  // Clear form
-  document.getElementById('ov-product').value = '';
+  // Clear form + selections
   document.getElementById('ov-bins').value = '';
   document.getElementById('ov-pos').value = '';
+  document.getElementById('ov-search').value = '';
+  ovSelected.clear();
+  ovFilterList();
   renderOverridesTab();
 }
 
