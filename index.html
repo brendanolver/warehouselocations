@@ -1865,6 +1865,42 @@ function renderLocTable() {
   }
 
   html += '</tbody></table>';
+
+  // Last Chance section
+  const q       = (document.getElementById('fp-search').value || '').toLowerCase();
+  const fpCats  = fpDdVals('fp-dd-cat');
+  const fpStats = fpDdVals('fp-dd-status');
+  const fpTiers = fpDdVals('fp-dd-tier');
+  const lcRows  = DATA.filter(r =>
+    r.location === 'LastChance' &&
+    (!q           || r.product.toLowerCase().includes(q)) &&
+    (!fpCats.length  || fpCats.includes(r.category)) &&
+    (!fpStats.length || fpStats.includes(r.status)) &&
+    (!fpTiers.length || fpTiers.includes(r.tier))
+  ).sort((a,b) => a.product.localeCompare(b.product));
+
+  if (lcRows.length > 0) {
+    html += `<div style="margin-top:24px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#be185d;padding:8px 12px;background:#fdf2f8;border:1.5px solid #fbcfe8;border-radius:8px 8px 0 0">🏷️ Last Chance Area &nbsp;<span style="font-weight:400;opacity:.7">${lcRows.length} styles</span></div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead><tr>
+          <th style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:2px solid #fbcfe8;background:#fdf2f8">Product</th>
+          <th style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:2px solid #fbcfe8;background:#fdf2f8">Category</th>
+          <th style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:2px solid #fbcfe8;background:#fdf2f8">Status</th>
+          <th style="font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:right;border-bottom:2px solid #fbcfe8;background:#fdf2f8">SOH</th>
+        </tr></thead>
+        <tbody>`;
+    lcRows.forEach(r => {
+      html += `<tr style="background:#fdf2f8">
+        <td style="padding:7px 12px;border-bottom:1px solid #fbcfe8;color:#be185d;font-weight:500">${r.product}</td>
+        <td style="padding:7px 12px;border-bottom:1px solid #fbcfe8;color:var(--muted);font-size:11px">${r.category}</td>
+        <td style="padding:7px 12px;border-bottom:1px solid #fbcfe8"><span class="badge ${badgeMap[r.status]||'b-old'}">${r.status}</span></td>
+        <td style="padding:7px 12px;border-bottom:1px solid #fbcfe8;text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:#be185d">${r.soh.toLocaleString()}</td>
+      </tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
   document.getElementById('locTable').innerHTML = html;
 }
 
