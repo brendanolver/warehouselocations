@@ -1231,6 +1231,20 @@ if (fpCatPanel) {
   });
 }
 
+function normalizeMonth(s) {
+  if (!s || s === '—') return s;
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // Strip separators, e.g. "SEP26" or "Sep-26" or "Sep 26"
+  const clean = s.replace(/[-\s]/g, '').toUpperCase();
+  const monMatch = clean.match(/^([A-Z]+?)(\d{2,4})$/);
+  if (!monMatch) return s; // non-date value like "CORE" — return as-is
+  const [, monRaw, yrRaw] = monMatch;
+  const yr = yrRaw.slice(-2); // last 2 digits
+  const mIdx = monthOrder.findIndex(m => m.toUpperCase().startsWith(monRaw.slice(0,3)));
+  if (mIdx < 0) return s;
+  return monthOrder[mIdx] + '-' + yr;
+}
+
 function buildMonthDropdown() {
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const sortMonths = (a, b) => {
@@ -1243,8 +1257,8 @@ function buildMonthDropdown() {
     return parse(a) - parse(b);
   };
   const allMonths = [...new Set([
-    ...DATA.map(r => r.monthDel).filter(m => m && m !== '—'),
-    ...DATA.map(r => r.monthDue).filter(m => m && m !== '—')
+    ...DATA.map(r => r.monthDel).filter(m => m && m !== '—').map(normalizeMonth),
+    ...DATA.map(r => r.monthDue).filter(m => m && m !== '—').map(normalizeMonth)
   ])].sort(sortMonths);
   const panel = document.getElementById('dd-month-panel');
   panel.innerHTML = '';
@@ -1284,7 +1298,7 @@ function getFiltered() {
     (!sts.length     || sts.includes(r.status)) &&
     (!tiers.length   || tiers.includes(r.tier)) &&
     (!streets.length || streets.includes(r.posStart.substring(0, 2))) &&
-    (!months.length  || months.includes(r.monthDel) || months.includes(r.monthDue))
+    (!months.length  || months.includes(normalizeMonth(r.monthDel)) || months.includes(normalizeMonth(r.monthDue)))
   );
 }
 
