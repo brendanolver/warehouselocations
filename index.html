@@ -544,6 +544,7 @@
   <div class="table-wrap">
     <table>
       <thead><tr>
+        <th onclick="sortBy('sku',this)">SKU <span class="sa">↕</span></th>
         <th onclick="sortBy('product',this)">Product <span class="sa">↕</span></th>
         <th onclick="sortBy('category',this)">Category <span class="sa">↕</span></th>
         <th onclick="sortBy('monthDue',this)">Month Del <span class="sa">↕</span></th>
@@ -1090,6 +1091,7 @@ function parseCSV(text) {
     // Month Del (e.g. "Jul-26") takes priority over Month Due
     const monthDue = get(vals, 'Month Del') || get(vals, 'Month Due') || get(vals, 'Delivery Month') || '—';
     rows.push({
+      sku: get(vals,'SKU'),
       product: get(vals,'Product'),
       category: cat, status, tier: get(vals,'Tier','—'),
       stockStatus, soh, onOrder: Math.round(onOrder),
@@ -1231,7 +1233,7 @@ function getFiltered() {
   const tiers   = ddVals('dd-tier');
   const streets = ddVals('dd-street');
   return DATA.filter(r =>
-    (!q || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
+    (!q || (r.sku||'').toLowerCase().includes(q) || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
     (!cats.length    || cats.includes(r.category)) &&
     (!locs.length    || locs.some(l => {
       if (l === 'Primary')           return r.location === 'Primary';
@@ -1268,7 +1270,7 @@ function renderTable() {
   });
   document.getElementById('fCount').textContent=rows.length+' styles';
   const tbody=document.getElementById('tableBody');
-  if(!rows.length){tbody.innerHTML='<tr><td colspan="12" class="empty-state">No styles match these filters</td></tr>';return;}
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="13" class="empty-state">No styles match these filters</td></tr>';return;}
   // Totals
   const tSoh=rows.reduce((s,r)=>s+r.soh,0);
   const tOO=rows.reduce((s,r)=>s+r.onOrder,0);
@@ -1276,7 +1278,7 @@ function renderTable() {
   const tRU=rows.reduce((s,r)=>s+r.reserveUnits,0);
   const tBins=rows.filter(r=>r.location==='Primary').reduce((s,r)=>s+r.binsTotal,0);
   const totalsRow = `<tr class="totals-row">
-    <td class="tot-label">Totals</td><td></td><td></td><td></td><td></td>
+    <td class="tot-label">Totals</td><td></td><td></td><td></td><td></td><td></td>
     <td class="num" style="color:var(--text2)">${tSoh.toLocaleString()}</td>
     <td class="num" style="color:var(--amber)">${tOO>0?tOO.toLocaleString():'—'}</td>
     <td class="num" style="color:var(--green)">${tPU.toLocaleString()}</td>
@@ -1303,6 +1305,7 @@ function renderTable() {
         ? `<span style="font-size:10px;color:#be185d;font-family:'DM Mono',monospace">${r.soh.toLocaleString()} units</span>`
         : renderBins(r.binsTotal);
     html+=`<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);white-space:nowrap">${r.sku||'—'}</td>
       <td class="pn">${r.product}</td>
       <td><span style="font-size:10px;color:var(--muted);font-family:'DM Sans',sans-serif">${r.category}</span></td>
       <td><span style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace">${r.monthDue!=='—'?r.monthDue:'<span style="color:var(--muted2)">—</span>'}</span></td>
