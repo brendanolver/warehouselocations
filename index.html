@@ -168,7 +168,12 @@
   .street-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:0 2px}
   .cols-row{display:flex;gap:3px;align-items:flex-end}
   /* warehouse vertical-column layout */
-  .wh-floor{display:flex;gap:5px;align-items:flex-end}
+  .wh-floor{display:flex;gap:0;align-items:stretch}
+  .wh-col{align-items:center}
+  .wh-aisle-gap{width:22px;flex-shrink:0;background:rgba(0,0,0,.025);border-left:1px dashed var(--border);border-right:1px dashed var(--border)}
+  .wh-junction{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:12px}
+  .wh-junction-line{flex:1;border-left:1.5px dashed var(--border2);opacity:.5}
+  .wh-junction-lbl{font-family:'Syne',sans-serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#be185d;padding-top:4px;text-align:center}
   .wh-col{display:flex;flex-direction:column;align-items:center}
   .wh-col-label{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;padding-top:5px}
   .wh-col-label.endcap{color:#be185d}
@@ -1427,48 +1432,44 @@ function renderVisual() {
   legHtml+='<div class="vl-item"><div class="vl-dot" style="background:var(--border)"></div>EMPTY</div>';
   document.getElementById('visLegend').innerHTML=legHtml;
 
-  // Column order matches physical warehouse left→right:
-  // A1 | A2 | AB1 | B1 | B2 | BC1 | C1 | C2 | CD1 | D1 | D2 | DE1 | E1 | E2
-  // AB1 = back of A2 & front of B1, BC1 = back of B2 & front of C1, etc.
+  // Physical warehouse layout — aisles are walking picks, junctions are back-to-back walls
   const LAYOUT = [
-    {type:'street', id:'A1'},
-    {type:'street', id:'A2'},
-    {type:'endcap', id:'AB1'},
-    {type:'street', id:'B1'},
-    {type:'street', id:'B2'},
-    {type:'endcap', id:'BC1'},
-    {type:'street', id:'C1'},
-    {type:'street', id:'C2'},
-    {type:'endcap', id:'CD1'},
-    {type:'street', id:'D1'},
-    {type:'street', id:'D2'},
-    {type:'endcap', id:'DE1'},
-    {type:'street', id:'E1'},
-    {type:'street', id:'E2'},
+    {type:'street',   id:'A1'},
+    {type:'aisle'},
+    {type:'street',   id:'A2'},
+    {type:'junction', id:'AB1', overhead:'G1 · Beach Shorts'},
+    {type:'street',   id:'B1'},
+    {type:'aisle'},
+    {type:'street',   id:'B2'},
+    {type:'junction', id:'BC1'},
+    {type:'street',   id:'C1'},
+    {type:'aisle'},
+    {type:'street',   id:'C2'},
+    {type:'junction', id:'CD1', overhead:'F1 · Trackshorts'},
+    {type:'street',   id:'D1'},
+    {type:'aisle'},
+    {type:'street',   id:'D2'},
+    {type:'junction', id:'DE1'},
+    {type:'street',   id:'E1'},
+    {type:'aisle'},
+    {type:'street',   id:'E2'},
   ];
-  // Overhead shelf labels (positioned above specific columns)
-  const OVERHEAD = {AB1:'G1 · Beach Shorts', CD1:'F1 · Trackshorts'};
 
   const CROSS_AT = 17; // column positions above cross-aisle (0–16), below (17–33)
 
   let html = '<div class="wh-floor">';
 
   LAYOUT.forEach(col => {
-    if (col.type === 'endcap') {
-      // End bay: same full-width bin column as a street, just currently empty
-      // Render all-empty bin rows with a dashed border to distinguish
-      const overheadTag = OVERHEAD[col.id]
-        ? `<div class="wh-top-tag">${OVERHEAD[col.id]}</div>`
+    if (col.type === 'aisle') {
+      html += `<div class="wh-aisle-gap"></div>`;
+    } else if (col.type === 'junction') {
+      const overheadTag = col.overhead
+        ? `<div class="wh-top-tag" style="white-space:nowrap">${col.overhead}</div>`
         : `<div style="height:18px"></div>`;
-      let topRows = '', bottomRows = '';
-      for (let rc = 0; rc < CROSS_AT; rc++) topRows += buildBinRow([]);
-      for (let rc = CROSS_AT; rc < COLS_PER_STREET; rc++) bottomRows += buildBinRow([]);
-      html += `<div class="wh-col">
+      html += `<div class="wh-junction">
         ${overheadTag}
-        <div style="display:flex;flex-direction:column;gap:1px;border:1.5px dashed var(--border);border-radius:3px;padding:1px">${topRows}</div>
-        <div class="wh-aisle"><div class="wh-aisle-line"></div></div>
-        <div style="display:flex;flex-direction:column;gap:1px;border:1.5px dashed var(--border);border-radius:3px;padding:1px">${bottomRows}</div>
-        <div class="wh-col-label endcap">${col.id}</div>
+        <div class="wh-junction-line"></div>
+        <div class="wh-junction-lbl">${col.id}</div>
       </div>`;
     } else {
       const si = STREETS.indexOf(col.id);
