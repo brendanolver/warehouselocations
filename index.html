@@ -1010,6 +1010,7 @@ function loadCSV(file) {
     const result = recompute(parsed);
     DATA = result.rows;
     COL_MAP = result.colMap;
+    buildMonthDropdown();
     updateStats();
     renderTable();
     if (document.getElementById('tab-visual').style.display !== 'none') renderVisual();
@@ -1230,36 +1231,23 @@ if (fpCatPanel) {
   });
 }
 
-// Populate Month Del and Month Due dropdowns dynamically from DATA
-(function() {
+function buildMonthDropdown() {
   const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const sortMonths = (a, b) => {
-    const parse = s => { const [m, y] = s.split('-'); return (parseInt(y)||0)*12 + (monthOrder.indexOf(m)>=0?monthOrder.indexOf(m):99); };
-    // 'CORE' and non-date values sort to top
-    const aNum = parse(a), bNum = parse(b);
-    return aNum - bNum;
+    const parse = s => {
+      const parts = s.split('-');
+      const mon = parts[0], yr = parts[1];
+      const mIdx = monthOrder.indexOf(mon);
+      return (parseInt(yr) || 0) * 12 + (mIdx >= 0 ? mIdx : -1);
+    };
+    return parse(a) - parse(b);
   };
-  function buildMonthDD(panelId, ddId, field) {
-    const vals = [...new Set(DATA.map(r => r[field]).filter(m => m && m !== '—'))].sort(sortMonths);
-    const panel = document.getElementById(panelId);
-    const clear = document.createElement('div');
-    clear.className = 'mdd-clear';
-    clear.textContent = 'Select All';
-    clear.onclick = () => { document.querySelectorAll(`#${panelId} input`).forEach(i => i.checked = true); ddChange(ddId); };
-    panel.appendChild(clear);
-    vals.forEach(m => {
-      const lbl = document.createElement('label');
-      lbl.className = 'mdd-item';
-      lbl.innerHTML = `<input type="checkbox" value="${m}" onchange="ddChange('${ddId}')"> ${m}`;
-      panel.appendChild(lbl);
-    });
-  }
-  // Combine unique values from both monthDel and monthDue into one dropdown
   const allMonths = [...new Set([
     ...DATA.map(r => r.monthDel).filter(m => m && m !== '—'),
     ...DATA.map(r => r.monthDue).filter(m => m && m !== '—')
   ])].sort(sortMonths);
   const panel = document.getElementById('dd-month-panel');
+  panel.innerHTML = '';
   const clear = document.createElement('div');
   clear.className = 'mdd-clear';
   clear.textContent = 'Select All';
@@ -1271,7 +1259,8 @@ if (fpCatPanel) {
     lbl.innerHTML = `<input type="checkbox" value="${m}" onchange="ddChange('dd-month')"> ${m}`;
     panel.appendChild(lbl);
   });
-})();
+}
+buildMonthDropdown();
 
 function getFiltered() {
   const q = document.getElementById('search').value.toLowerCase();
