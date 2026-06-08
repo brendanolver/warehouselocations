@@ -539,6 +539,11 @@
       </div>
     </div>
 
+    <div class="mdd" id="dd-month">
+      <button class="mdd-btn" onclick="toggleDD('dd-month')"><span id="dd-month-lbl">Month Del</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-month-panel"></div>
+    </div>
+
     <div class="fc" id="fCount">521 styles</div>
   </div>
   <div class="table-wrap">
@@ -1179,13 +1184,13 @@ function ddChange(id) {
   const existing = btn.querySelector('.mdd-badge');
   if (existing) existing.remove();
   if (vals.length === 0) {
-    const defaults = {'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier'};
-    lblEl.textContent = defaults[id];
+    const defaults = {'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-month':'Month Del'};
+    lblEl.textContent = defaults[id] || id;
     btn.classList.remove('active');
   } else {
-    lblEl.textContent = vals.length === 1 ? vals[0].charAt(0)+vals[0].slice(1).toLowerCase() : {
-      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-street':'Street'
-    }[id];
+    lblEl.textContent = vals.length === 1 ? vals[0] : {
+      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-street':'Street','dd-month':'Month Del'
+    }[id] || id;
     btn.classList.add('active');
     const badge = document.createElement('span');
     badge.className = 'mdd-badge';
@@ -1225,6 +1230,28 @@ if (fpCatPanel) {
   });
 }
 
+// Populate Month Del dropdown dynamically from DATA
+(function() {
+  const monthOrder = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = [...new Set(DATA.map(r => r.monthDue).filter(m => m && m !== '—'))].sort((a, b) => {
+    // Sort by year then month (format: "Mon-YY" e.g. "Jul-26")
+    const parse = s => { const [m, y] = s.split('-'); return (parseInt(y)||0)*12 + (monthOrder.indexOf(m)||0); };
+    return parse(a) - parse(b);
+  });
+  const panel = document.getElementById('dd-month-panel');
+  const clear = document.createElement('div');
+  clear.className = 'mdd-clear';
+  clear.textContent = 'Select All';
+  clear.onclick = () => { document.querySelectorAll('#dd-month-panel input').forEach(i => i.checked = true); ddChange('dd-month'); };
+  panel.appendChild(clear);
+  months.forEach(m => {
+    const lbl = document.createElement('label');
+    lbl.className = 'mdd-item';
+    lbl.innerHTML = `<input type="checkbox" value="${m}" onchange="ddChange('dd-month')"> ${m}`;
+    panel.appendChild(lbl);
+  });
+})();
+
 function getFiltered() {
   const q = document.getElementById('search').value.toLowerCase();
   const cats = ddVals('dd-cat');
@@ -1232,6 +1259,7 @@ function getFiltered() {
   const sts  = ddVals('dd-status');
   const tiers   = ddVals('dd-tier');
   const streets = ddVals('dd-street');
+  const months  = ddVals('dd-month');
   return DATA.filter(r =>
     (!q || (r.sku||'').toLowerCase().includes(q) || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
     (!cats.length    || cats.includes(r.category)) &&
@@ -1245,7 +1273,8 @@ function getFiltered() {
     })) &&
     (!sts.length     || sts.includes(r.status)) &&
     (!tiers.length   || tiers.includes(r.tier)) &&
-    (!streets.length || streets.includes(r.posStart.substring(0, 2)))
+    (!streets.length || streets.includes(r.posStart.substring(0, 2))) &&
+    (!months.length  || months.includes(r.monthDue))
   );
 }
 
