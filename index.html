@@ -1920,6 +1920,7 @@ function renderLocTable() {
 
   const cols = [
     {key:'pos',    label:'Position'},
+    {key:'sku',    label:'SKU'},
     {key:'product',label:'Product'},
     {key:'category',label:'Category'},
     {key:'status', label:'Status'},
@@ -1928,6 +1929,7 @@ function renderLocTable() {
 
   const sortVal = r => {
     if (locSortCol==='pos')      return r.posStart;
+    if (locSortCol==='sku')      return r.sku||'';
     if (locSortCol==='product')  return r.product;
     if (locSortCol==='category') return r.category;
     if (locSortCol==='status')   return r.status;
@@ -1956,12 +1958,12 @@ function renderLocTable() {
     STREETS.forEach(street => {
       const items = byStreet[street];
       if (!items || !items.length) return;
-      html += `<tr class="street-group"><td colspan="5">Street ${street}</td></tr>`;
+      html += `<tr class="street-group"><td colspan="6">Street ${street}</td></tr>`;
       items.forEach(r => {
         const endBin = parseInt(r.posStart.slice(-2)) + r.binsTotal - 1;
         const endPos = r.posStart.slice(0,-2) + String(Math.min(endBin,6)).padStart(2,'0');
         const range = r.binsTotal > 1 ? r.posStart + ' – ' + endPos : r.posStart;
-        html += `<tr><td><span class="pos-range">${range}</span></td><td>${r.product}</td><td>${r.category}</td><td><span class="badge ${badgeMap[r.status]||'b-old'}">${r.status}</span></td><td>${r.binsTotal}</td></tr>`;
+        html += `<tr><td><span class="pos-range">${range}</span></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${r.sku||'—'}</td><td>${r.product}</td><td>${r.category}</td><td><span class="badge ${badgeMap[r.status]||'b-old'}">${r.status}</span></td><td>${r.binsTotal}</td></tr>`;
       });
     });
   } else {
@@ -1973,7 +1975,7 @@ function renderLocTable() {
       const endBin = parseInt(r.posStart.slice(-2)) + r.binsTotal - 1;
       const endPos = r.posStart.slice(0,-2) + String(Math.min(endBin,6)).padStart(2,'0');
       const range = r.binsTotal > 1 ? r.posStart + ' – ' + endPos : r.posStart;
-      html += `<tr><td><span class="pos-range">${range}</span></td><td>${r.product}</td><td>${r.category}</td><td><span class="badge ${badgeMap[r.status]||'b-old'}">${r.status}</span></td><td>${r.binsTotal}</td></tr>`;
+      html += `<tr><td><span class="pos-range">${range}</span></td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)">${r.sku||'—'}</td><td>${r.product}</td><td>${r.category}</td><td><span class="badge ${badgeMap[r.status]||'b-old'}">${r.status}</span></td><td>${r.binsTotal}</td></tr>`;
     });
   }
 
