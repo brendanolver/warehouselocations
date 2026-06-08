@@ -1254,7 +1254,7 @@ function buildMonthDropdown() {
       const mIdx = monthOrder.indexOf(mon);
       return (parseInt(yr) || 0) * 12 + (mIdx >= 0 ? mIdx : -1);
     };
-    return parse(a) - parse(b);
+    return parse(b) - parse(a);
   };
   const allMonths = [...new Set([
     ...DATA.map(r => r.monthDel).filter(m => m && m !== '—').map(normalizeMonth),
