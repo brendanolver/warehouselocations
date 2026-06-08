@@ -539,14 +539,9 @@
       </div>
     </div>
 
-    <div class="mdd" id="dd-monthdel">
-      <button class="mdd-btn" onclick="toggleDD('dd-monthdel')"><span id="dd-monthdel-lbl">Month Del</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
-      <div class="mdd-panel" id="dd-monthdel-panel"></div>
-    </div>
-
-    <div class="mdd" id="dd-monthdue">
-      <button class="mdd-btn" onclick="toggleDD('dd-monthdue')"><span id="dd-monthdue-lbl">Month Due</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
-      <div class="mdd-panel" id="dd-monthdue-panel"></div>
+    <div class="mdd" id="dd-month">
+      <button class="mdd-btn" onclick="toggleDD('dd-month')"><span id="dd-month-lbl">Month</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="dd-month-panel"></div>
     </div>
 
     <div class="fc" id="fCount">521 styles</div>
@@ -1189,12 +1184,12 @@ function ddChange(id) {
   const existing = btn.querySelector('.mdd-badge');
   if (existing) existing.remove();
   if (vals.length === 0) {
-    const defaults = {'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-monthdel':'Month Del','dd-monthdue':'Month Due'};
+    const defaults = {'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-month':'Month'};
     lblEl.textContent = defaults[id] || id;
     btn.classList.remove('active');
   } else {
     lblEl.textContent = vals.length === 1 ? vals[0] : {
-      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-street':'Street','dd-monthdel':'Month Del','dd-monthdue':'Month Due'
+      'dd-cat':'Category','dd-loc':'Location','dd-status':'Status','dd-tier':'Tier','dd-street':'Street','dd-month':'Month'
     }[id] || id;
     btn.classList.add('active');
     const badge = document.createElement('span');
@@ -1259,8 +1254,23 @@ if (fpCatPanel) {
       panel.appendChild(lbl);
     });
   }
-  buildMonthDD('dd-monthdel-panel', 'dd-monthdel', 'monthDel');
-  buildMonthDD('dd-monthdue-panel', 'dd-monthdue', 'monthDue');
+  // Combine unique values from both monthDel and monthDue into one dropdown
+  const allMonths = [...new Set([
+    ...DATA.map(r => r.monthDel).filter(m => m && m !== '—'),
+    ...DATA.map(r => r.monthDue).filter(m => m && m !== '—')
+  ])].sort(sortMonths);
+  const panel = document.getElementById('dd-month-panel');
+  const clear = document.createElement('div');
+  clear.className = 'mdd-clear';
+  clear.textContent = 'Select All';
+  clear.onclick = () => { document.querySelectorAll('#dd-month-panel input').forEach(i => i.checked = true); ddChange('dd-month'); };
+  panel.appendChild(clear);
+  allMonths.forEach(m => {
+    const lbl = document.createElement('label');
+    lbl.className = 'mdd-item';
+    lbl.innerHTML = `<input type="checkbox" value="${m}" onchange="ddChange('dd-month')"> ${m}`;
+    panel.appendChild(lbl);
+  });
 })();
 
 function getFiltered() {
@@ -1270,12 +1280,11 @@ function getFiltered() {
   const sts  = ddVals('dd-status');
   const tiers   = ddVals('dd-tier');
   const streets = ddVals('dd-street');
-  const monthsDel = ddVals('dd-monthdel');
-  const monthsDue = ddVals('dd-monthdue');
+  const months = ddVals('dd-month');
   return DATA.filter(r =>
     (!q || (r.sku||'').toLowerCase().includes(q) || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
-    (!cats.length     || cats.includes(r.category)) &&
-    (!locs.length     || locs.some(l => {
+    (!cats.length    || cats.includes(r.category)) &&
+    (!locs.length    || locs.some(l => {
       if (l === 'Primary')           return r.location === 'Primary';
       if (l === 'RESERVE_INSTOCK')   return r.reserveUnits > 0 && r.status !== 'PRE-RELEASE' && r.stockStatus !== 'On Order';
       if (l === 'RESERVE_PRERELEASE')return r.status === 'PRE-RELEASE';
@@ -1283,11 +1292,10 @@ function getFiltered() {
       if (l === 'LAST_CHANCE')       return r.location === 'LastChance';
       return false;
     })) &&
-    (!sts.length      || sts.includes(r.status)) &&
-    (!tiers.length    || tiers.includes(r.tier)) &&
-    (!streets.length  || streets.includes(r.posStart.substring(0, 2))) &&
-    (!monthsDel.length || monthsDel.includes(r.monthDel)) &&
-    (!monthsDue.length || monthsDue.includes(r.monthDue))
+    (!sts.length     || sts.includes(r.status)) &&
+    (!tiers.length   || tiers.includes(r.tier)) &&
+    (!streets.length || streets.includes(r.posStart.substring(0, 2))) &&
+    (!months.length  || months.includes(r.monthDel) || months.includes(r.monthDue))
   );
 }
 
