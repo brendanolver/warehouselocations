@@ -1428,21 +1428,21 @@ function renderVisual() {
   document.getElementById('visLegend').innerHTML=legHtml;
 
   // Column order matches physical warehouse left→right:
-  // A1 | A2 | AB1 | B1 | BC1 | B2 | C1 | CD1 | C2 | D1 | DE1 | D2 | E1 | E2
-  // G1 overhead above A2/AB1 gap, F1 above C2/D1 gap
+  // A1 | A2 | AB1 | B1 | B2 | BC1 | C1 | C2 | CD1 | D1 | D2 | DE1 | E1 | E2
+  // AB1 = back of A2 & front of B1, BC1 = back of B2 & front of C1, etc.
   const LAYOUT = [
     {type:'street', id:'A1'},
     {type:'street', id:'A2'},
     {type:'endcap', id:'AB1'},
     {type:'street', id:'B1'},
-    {type:'endcap', id:'BC1'},
     {type:'street', id:'B2'},
+    {type:'endcap', id:'BC1'},
     {type:'street', id:'C1'},
-    {type:'endcap', id:'CD1'},
     {type:'street', id:'C2'},
+    {type:'endcap', id:'CD1'},
     {type:'street', id:'D1'},
-    {type:'endcap', id:'DE1'},
     {type:'street', id:'D2'},
+    {type:'endcap', id:'DE1'},
     {type:'street', id:'E1'},
     {type:'street', id:'E2'},
   ];
