@@ -627,6 +627,11 @@
       </div>
     </div>
 
+    <div class="mdd" id="fp-dd-month">
+      <button class="mdd-btn" onclick="toggleDD('fp-dd-month')"><span id="fp-dd-month-lbl">Month</span><svg width="10" height="10" viewBox="0 0 10 6"><path d="M0 0l5 6 5-6z" fill="currentColor"/></svg></button>
+      <div class="mdd-panel" id="fp-dd-month-panel"></div>
+    </div>
+
     <div class="vis-legend" id="visLegend"></div>
   </div>
   <div class="visual-scroll" id="visualScroll">
@@ -1261,18 +1266,28 @@ function buildMonthDropdown() {
     ...DATA.map(r => r.monthDue).filter(m => m && m !== '—').map(normalizeMonth)
   ])].sort(sortMonths);
   const panel = document.getElementById('dd-month-panel');
-  panel.innerHTML = '';
-  const clear = document.createElement('div');
-  clear.className = 'mdd-clear';
-  clear.textContent = 'Select All';
-  clear.onclick = () => { document.querySelectorAll('#dd-month-panel input').forEach(i => i.checked = true); ddChange('dd-month'); };
-  panel.appendChild(clear);
-  allMonths.forEach(m => {
-    const lbl = document.createElement('label');
-    lbl.className = 'mdd-item';
-    lbl.innerHTML = `<input type="checkbox" value="${m}" onchange="ddChange('dd-month')"> ${m}`;
-    panel.appendChild(lbl);
-  });
+  function populatePanel(panelId, onchangeFn) {
+    const panel = document.getElementById(panelId);
+    if (!panel) return;
+    panel.innerHTML = '';
+    const clear = document.createElement('div');
+    clear.className = 'mdd-clear';
+    clear.textContent = 'Select All';
+    clear.onclick = () => { document.querySelectorAll(`#${panelId} input`).forEach(i => i.checked = true); onchangeFn(); };
+    panel.appendChild(clear);
+    allMonths.forEach(m => {
+      const lbl = document.createElement('label');
+      lbl.className = 'mdd-item';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = m;
+      cb.addEventListener('change', onchangeFn);
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode(' ' + m));
+      panel.appendChild(lbl);
+    });
+  }
+  populatePanel('dd-month-panel', () => ddChange('dd-month'));
+  populatePanel('fp-dd-month-panel', fpDdChange);
 }
 buildMonthDropdown();
 
@@ -1881,12 +1896,12 @@ function fpDdClear(id) {
   fpDdChange();
 }
 function fpDdChange() {
-  ['fp-dd-cat','fp-dd-status','fp-dd-tier','fp-dd-street'].forEach(id => {
+  ['fp-dd-cat','fp-dd-status','fp-dd-tier','fp-dd-street','fp-dd-month'].forEach(id => {
     const v = fpDdVals(id);
     const lbl = document.getElementById(id+'-lbl');
     const btn = document.querySelector('#'+id+' .mdd-btn');
     if (!lbl || !btn) return;
-    const names = {'fp-dd-cat':'Category','fp-dd-status':'Status','fp-dd-tier':'Tier','fp-dd-street':'Street'};
+    const names = {'fp-dd-cat':'Category','fp-dd-status':'Status','fp-dd-tier':'Tier','fp-dd-street':'Street','fp-dd-month':'Month'};
     if (v.length) { lbl.textContent = names[id]+' '+v.length; btn.classList.add('active'); }
     else { lbl.textContent = names[id]; btn.classList.remove('active'); }
   });
@@ -1899,13 +1914,15 @@ function getFPFiltered() {
   const stats   = fpDdVals('fp-dd-status');
   const tiers   = fpDdVals('fp-dd-tier');
   const streets = fpDdVals('fp-dd-street');
+  const months  = fpDdVals('fp-dd-month');
   return DATA.filter(r =>
     r.location === 'Primary' && r.binsTotal > 0 &&
     (!q           || r.product.toLowerCase().includes(q) || r.posStart.toLowerCase().includes(q)) &&
     (!cats.length    || cats.includes(r.category)) &&
     (!stats.length   || stats.includes(r.status)) &&
     (!tiers.length   || tiers.includes(r.tier)) &&
-    (!streets.length || streets.includes(r.posStart.substring(0,2)))
+    (!streets.length || streets.includes(r.posStart.substring(0,2))) &&
+    (!months.length  || months.includes(normalizeMonth(r.monthDel)) || months.includes(normalizeMonth(r.monthDue)))
   );
 }
 
